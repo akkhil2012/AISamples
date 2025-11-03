@@ -1,0 +1,582 @@
+{
+  "name": "Remove emails template",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -140,
+        40
+      ],
+      "id": "5b30fd79-4bc6-4404-8412-764953aea186",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        860,
+        20
+      ],
+      "id": "f97b186c-4cd5-419b-af65-342382bd336d",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "516a41ae-fd23-4f74-a5e4-1dd8585f1fc2",
+              "leftValue": "={{ $json.blocked }}",
+              "rightValue": "happy@emails.stg.prohabits.com",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1240,
+        160
+      ],
+      "id": "9f4252bf-5e42-4596-8c35-da895fa0faa9",
+      "name": "if need to remove"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        360,
+        40
+      ],
+      "id": "86c42816-1a34-473f-a21c-8ae32f4c7304",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// List of domains to remove\nconst blockedDomains = [\n  \"walgreens@eml.walgreens.com\",\n  \"email.livenation.com\",\n  \"email.playstation.com\",\n  \"concierge@amenify.com\",\n  \"info@mailer.mequilibrium.com\",\n  \"hello@keychron.com\",\n  \"explore.pinterest.com\",\n  \"newsletters@em.walmart.com\",\n  \"no_reply@free-lance.ru\",\n  \"community@pstake.finance\",\n  \"marketing@jacksonvillezoo.org\",\n  \"info@prometheus.org.ua\",\n  \"aliexpress@notice.aliexpress.com\",\n  \"hello@g.hellofresh.com\"\n];\n\n// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.blocked = blockedDomains.some(blockedDomain => {\n    return item.json.From.includes(blockedDomain);\n  });\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        100
+      ],
+      "id": "46e299a4-69ea-484b-8be7-9c38bb833df6",
+      "name": "matching"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "filters": {
+          "readStatus": "unread"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        120,
+        240
+      ],
+      "id": "4547c0df-9b8b-4ae4-b601-fb87911568b5",
+      "name": "Gmail 3",
+      "webhookId": "0ecf172b-b2e3-4e45-a80e-20147ef3dcf9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Txoa38EaUjVS1448",
+          "name": "Gmail Crypto"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "messageId": "={{ $('Loop Over Items').item.json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2040,
+        460
+      ],
+      "id": "35499de1-0212-479c-8d15-2edcca4c96af",
+      "name": "delete email 2",
+      "webhookId": "632d5998-d65e-4064-94fc-ef411360370a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "AT3AWr05rFuo43AG",
+          "name": "Gmail account ProHabits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "messageId": "={{ $('Loop Over Items').item.json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1720,
+        460
+      ],
+      "id": "d95b2fc1-3f72-4404-8a27-11a63dd7c23e",
+      "name": "delete email 3",
+      "webhookId": "d4f90e5b-fdaa-4a3c-98b4-ec8941bd7cfe",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Txoa38EaUjVS1448",
+          "name": "Gmail Crypto"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "messageId": "={{ $('Loop Over Items').item.json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2420,
+        460
+      ],
+      "id": "38933508-1630-4cc2-b2ac-0ed77d3a3d6e",
+      "name": "delete email 1",
+      "webhookId": "f679e6d0-e298-41c0-b36d-9338816a8d0e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "7bgRC48PklH5x8jr",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "filters": {
+          "readStatus": "unread"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        120,
+        40
+      ],
+      "id": "d4cfc410-6644-4bde-a857-8d4c46b77355",
+      "name": "Gmail 2",
+      "webhookId": "8267d932-82c0-47d0-8b0e-bba29517bb00",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "AT3AWr05rFuo43AG",
+          "name": "Gmail account ProHabits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "filters": {
+          "readStatus": "unread"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        120,
+        -160
+      ],
+      "id": "6a25cc57-2a5f-4637-92ad-3080b3fdb437",
+      "name": "Gmail 1",
+      "webhookId": "0dc6b4e4-a2c1-41f6-b58d-47a4222feb49",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "7bgRC48PklH5x8jr",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Before start\nYou must setup credentials to connect with Gmails account",
+        "height": 260,
+        "width": 320,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -300,
+        -280
+      ],
+      "typeVersion": 1,
+      "id": "4600942f-a76d-4016-9742-bc559ed8153d",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Gmail\nYou can add as many Gmail accounts as you want",
+        "height": 700,
+        "width": 220,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        60,
+        -280
+      ],
+      "typeVersion": 1,
+      "id": "5adc3cd7-64c8-46ce-91f0-f7177dba1505",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Blocked pattern\nSetup blocked domains here",
+        "height": 300,
+        "width": 220,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        980,
+        -20
+      ],
+      "typeVersion": 1,
+      "id": "329f2683-ca4f-4db2-8c3e-f222fd1ececa",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1060,
+        -240
+      ],
+      "id": "7e5a6d18-ea48-420f-b43d-15f3e4bab5e0",
+      "name": "result"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Loop Over Items').item.json.To }}",
+                    "rightValue": "s.cherbadzhy@gmail.com",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "isGmail"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6f742d8c-c701-4dc5-bf9c-af2c8b9bc349",
+                    "leftValue": "={{ $('Loop Over Items').item.json.To }}",
+                    "rightValue": "@prohabits.com",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "isProHabits"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ae64dc16-0f5c-4bb5-b15a-36f3cec146c9",
+                    "leftValue": "={{ $('Loop Over Items').item.json.To }}",
+                    "rightValue": "c.cherbadzhy@gmail.com",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "isCrypto"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1480,
+        220
+      ],
+      "id": "9c45b250-d9eb-43ab-aca3-38f2aa5f4153",
+      "name": "Match Gmail account"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Gmail 1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gmail 2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gmail 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "matching",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "if need to remove": {
+      "main": [
+        [
+          {
+            "node": "Match Gmail account",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "matching": {
+      "main": [
+        [
+          {
+            "node": "if need to remove",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail 3": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "delete email 2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "delete email 3": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "delete email 1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail 2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Gmail 1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match Gmail account": {
+      "main": [
+        [
+          {
+            "node": "delete email 1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "delete email 2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "delete email 3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e40a7f59-4680-47f9-b50a-5933b5180c0c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a9518720d2b2cc296a4abd515fb1d073ae32405ffd715d1e1b5874a6e49ba8a3"
+  },
+  "id": "nh8gBup9uJGUM6df",
+  "tags": [
+    {
+      "createdAt": "2025-02-12T13:27:21.708Z",
+      "updatedAt": "2025-02-12T13:27:21.708Z",
+      "id": "VFr0IlSZITGn1khC",
+      "name": "YouTube"
+    }
+  ]
+}

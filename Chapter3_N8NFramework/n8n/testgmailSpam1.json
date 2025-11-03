@@ -1,0 +1,152 @@
+{
+  "name": "Delete all Spam messages (Gmail)",
+  "nodes": [
+    {
+      "id": "GmailGetManySpam",
+      "name": "Gmail → Get Many (Spam)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [ -200, 0 ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": true,
+        "labelIds": [
+          "SPAM"
+        ],
+        "additionalFields": {
+          "q": ""
+        }
+      },
+      "credentials": {
+        "gmailOAuth2Api": {
+          "id": "__REPLACE_WITH_YOUR_CREDENTIAL_ID__",
+          "name": "Gmail OAuth2"
+        }
+      }
+    },
+    {
+      "id": "SplitBatches",
+      "name": "Split In Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [ 60, 0 ],
+      "parameters": {
+        "batchSize": 200
+      }
+    },
+    {
+      "id": "GmailDeleteMessage",
+      "name": "Gmail → Delete (Message)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [ 340, 0 ],
+      "parameters": {
+        "resource": "message",
+        "operation": "delete",
+        "messageId": "={{ $json.id }}"
+      },
+      "credentials": {
+        "gmailOAuth2Api": {
+          "id": "__REPLACE_WITH_YOUR_CREDENTIAL_ID__",
+          "name": "Gmail OAuth2"
+        }
+      }
+    },
+    {
+      "id": "IfMoreItems",
+      "name": "More items?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [ 340, 200 ],
+      "parameters": {
+        "conditions": {
+          "boolean": [],
+          "number": [],
+          "string": [
+            {
+              "value1": "={{$node[\"Split In Batches\"].context[\"noItemsLeft\"]}}",
+              "operation": "notEqual",
+              "value2": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "SplitNext",
+      "name": "Split → Next Batch",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [ 600, 200 ],
+      "parameters": {}
+    },
+    {
+      "id": "Note",
+      "name": "Note (optional filters)",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [ -200, -160 ],
+      "parameters": {
+        "notes": "To delete only older spam, set Gmail → Get Many → additionalFields.q to:\nolder_than:30d\n\nExamples:\nolder_than:7d from:newsletter@site.com\nnewer_than:1y subject:\"discount\"\n\nWARNING: The Delete node permanently removes messages (skips Trash)."
+      }
+    }
+  ],
+  "connections": {
+    "Gmail → Get Many (Spam)": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches": {
+      "main": [
+        [
+          {
+            "node": "Gmail → Delete (Message)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "More items?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "More items?": {
+      "main": [
+        [
+          {
+            "node": "Split → Next Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split → Next Batch": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "version": 2
+}
+

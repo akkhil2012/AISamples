@@ -1,0 +1,301 @@
+{
+  "meta": {
+    "instanceId": "unique_instance_id"
+  },
+  "name": "Data Comparison and Quality Analysis Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [20, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM ACCOUNT_DB2 ORDER BY account_id LIMIT {{ $json.batch_size || 10000 }}",
+        "additionalFields": {
+          "mode": "multiple"
+        },
+        "options": {
+          "largeNumbersOutput": "text"
+        }
+      },
+      "id": "db2-node-uuid",
+      "name": "Db2Node",
+      "type": "n8n-nodes-base.db2",
+      "typeVersion": 1,
+      "position": [240, 200],
+      "credentials": {
+        "db2": {
+          "id": "db2-credentials-id",
+          "name": "DB2 Connection"
+        }
+      },
+      "notes": "Extract large batch of data from DB2 ACCOUNT_DB2 table with columns: account_id, customer_name, account_type, balance, open_date, branch_code, status, last_transaction_date. Configure with OpenAI prompts to dynamically adjust batch sizes and query parameters."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Step 1: Save DB2 data to local file\nconst fs = require('fs');\nconst path = '/tmp/Db2_file.csv';\n\n// Convert data to CSV format\nconst headers = 'account_id,customer_name,account_type,balance,open_date,branch_code,status,last_transaction_date\\n';\nconst csvData = $input.all().map(item => {\n  const row = item.json;\n  return `${row.account_id},\"${row.customer_name}\",\"${row.account_type}\",${row.balance},\"${row.open_date}\",\"${row.branch_code}\",\"${row.status}\",\"${row.last_transaction_date}\"`;\n}).join('\\n');\n\nconst fullCsvContent = headers + csvData;\n\n// Write to file\nfs.writeFileSync(path, fullCsvContent);\n\nreturn [{\n  json: {\n    file_path: path,\n    file_size: fullCsvContent.length,\n    record_count: $input.all().length,\n    message: 'DB2 data saved successfully to Db2_file.csv'\n  }\n}];"
+      },
+      "id": "file-writer-uuid",
+      "name": "Save DB2 Data to File",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 200]
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "data-comparison-bucket",
+        "fileName": "db2-data/Db2_file.csv",
+        "binaryData": true,
+        "additionalFields": {
+          "acl": "private",
+          "storageClass": "STANDARD"
+        }
+      },
+      "id": "s3-upload-uuid",
+      "name": "DataMoverNode",
+      "type": "n8n-nodes-base.aws",
+      "typeVersion": 1,
+      "position": [680, 200],
+      "credentials": {
+        "aws": {
+          "id": "aws-s3-credentials",
+          "name": "AWS S3 Credentials"
+        }
+      },
+      "notes": "Step2: DataMoverNode uploads DB2 file to AWS S3 bucket for further processing. Uses OpenAI prompts to optimize upload parameters and error handling strategies."
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM ACCOUNT_CKDB ORDER BY account_id LIMIT {{ $json.batch_size || 10000 }}",
+        "additionalFields": {
+          "mode": "multiple"
+        },
+        "options": {
+          "largeNumbersOutput": "text"
+        }
+      },
+      "id": "cockroach-node-uuid",
+      "name": "CockroachDB Node",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [240, 400],
+      "credentials": {
+        "postgres": {
+          "id": "cockroachdb-credentials-id",
+          "name": "CockroachDB Connection"
+        }
+      },
+      "notes": "Step3: Extract large batch of data from CockroachDB ACCOUNT_CKDB table with enhanced columns for data comparison. Uses PostgreSQL node as CockroachDB is wire-compatible with PostgreSQL. OpenAI prompts configure optimal query strategies."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Step 3: Save CockroachDB data to local file\nconst fs = require('fs');\nconst path = '/tmp/CKDB_file.csv';\n\n// Convert data to CSV format\nconst headers = 'account_id,customer_name,account_type,balance,open_date,branch_code,status,last_transaction_date,additional_field1,additional_field2\\n';\nconst csvData = $input.all().map(item => {\n  const row = item.json;\n  return `${row.account_id},\"${row.customer_name}\",\"${row.account_type}\",${row.balance},\"${row.open_date}\",\"${row.branch_code}\",\"${row.status}\",\"${row.last_transaction_date}\",\"${row.additional_field1 || ''}\",\"${row.additional_field2 || ''}\"`;\n}).join('\\n');\n\nconst fullCsvContent = headers + csvData;\n\n// Write to file\nfs.writeFileSync(path, fullCsvContent);\n\nreturn [{\n  json: {\n    file_path: path,\n    file_size: fullCsvContent.length,\n    record_count: $input.all().length,\n    message: 'CockroachDB data saved successfully to CKDB_file.csv'\n  }\n}];"
+      },
+      "id": "ckdb-file-writer-uuid",
+      "name": "Save CKDB Data to File",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 400]
+    },
+    {
+      "parameters": {
+        "command": "spark-submit --master spark://spark-master:7077 --deploy-mode client --driver-memory 2g --executor-memory 4g --executor-cores 2 --class com.datacomparison.SparkDataComparator /opt/spark/jars/data-comparison.jar /tmp/Db2_file.csv /tmp/CKDB_file.csv /tmp/comparison_report.json",
+        "additionalFields": {
+          "workingDirectory": "/opt/spark"
+        }
+      },
+      "id": "spark-job-uuid",
+      "name": "Apache Spark Node",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "notes": "Step4: Apache Spark job compares data files from Step1 and Step3, generates quality analysis report. Performs data quality checks including null values, data type mismatches, duplicate records, and attribute-level comparisons. OpenAI prompts define comparison algorithms and quality metrics."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Step 5: Generate PDF report from Spark comparison results\nconst fs = require('fs');\nconst PDFDocument = require('pdfkit');\n\n// Read Spark comparison results\nconst comparisonResults = JSON.parse(fs.readFileSync('/tmp/comparison_report.json', 'utf8'));\n\n// Create PDF document\nconst doc = new PDFDocument();\nconst pdfPath = '/tmp/data_comparison_report.pdf';\n\n// Pipe to file\ndoc.pipe(fs.createWriteStream(pdfPath));\n\n// Add title\ndoc.fontSize(20)\n   .text('Data Quality and Comparison Report', 100, 100);\n\n// Add summary section\ndoc.fontSize(14)\n   .text('Executive Summary', 100, 150)\n   .fontSize(12)\n   .text(`Total DB2 Records: ${comparisonResults.db2_record_count}`, 100, 180)\n   .text(`Total CockroachDB Records: ${comparisonResults.ckdb_record_count}`, 100, 200)\n   .text(`Records Matched: ${comparisonResults.matched_records}`, 100, 220)\n   .text(`Records with Discrepancies: ${comparisonResults.discrepancy_count}`, 100, 240);\n\n// Add data quality issues section\ndoc.fontSize(14)\n   .text('Data Quality Issues Identified', 100, 280)\n   .fontSize(12);\n\nlet yPosition = 310;\ncomparisonResults.quality_issues.forEach(issue => {\n  doc.text(`• ${issue.type}: ${issue.description}`, 100, yPosition)\n     .text(`  Count: ${issue.count}, Severity: ${issue.severity}`, 120, yPosition + 15);\n  yPosition += 40;\n});\n\n// Add attribute mismatches section\ndoc.addPage()\n   .fontSize(14)\n   .text('Attribute-Level Mismatches', 100, 100)\n   .fontSize(12);\n\nyPosition = 130;\ncomparisonResults.attribute_mismatches.forEach(mismatch => {\n  doc.text(`Field: ${mismatch.field_name}`, 100, yPosition)\n     .text(`Mismatch Type: ${mismatch.type}`, 100, yPosition + 15)\n     .text(`Affected Records: ${mismatch.affected_count}`, 100, yPosition + 30)\n     .text(`Example: DB2='${mismatch.db2_example}', CKDB='${mismatch.ckdb_example}'`, 100, yPosition + 45);\n  yPosition += 80;\n});\n\n// Finalize the PDF\ndoc.end();\n\nreturn [{\n  json: {\n    report_path: pdfPath,\n    total_issues: comparisonResults.quality_issues.length,\n    total_mismatches: comparisonResults.attribute_mismatches.length,\n    report_generated: new Date().toISOString(),\n    message: 'PDF report generated successfully'\n  }\n}];"
+      },
+      "id": "pdf-generator-uuid",
+      "name": "ResultantNode",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "notes": "Step5: ResultantNode generates comprehensive PDF report showing data mismatches and quality issues identified by Apache Spark analysis. OpenAI prompts format report structure and visualization."
+    },
+    {
+      "parameters": {
+        "resource": "text",
+        "operation": "message",
+        "model": "gpt-4-turbo",
+        "options": {
+          "systemMessage": "You are a data quality expert and SQL script generator. Based on the data quality issues provided, analyze the problems and generate specific SQL scripts to fix data quality issues. Provide detailed explanations for each script and recommend best practices for data quality maintenance. Focus on JP Morgan Chase bank account data structures including account_id, customer_name, account_type, balance, open_date, branch_code, status, and transaction history."
+        },
+        "text": "Based on the data quality analysis report, please review the following issues and generate SQL scripts to fix them:\\n\\nData Quality Issues:\\n{{ $json.quality_issues }}\\n\\nAttribute Mismatches:\\n{{ $json.attribute_mismatches }}\\n\\nDatabase Tables: ACCOUNT_DB2 and ACCOUNT_CKDB\\n\\nPlease provide:\\n1. SQL UPDATE scripts to fix data inconsistencies\\n2. SQL scripts to standardize data formats (especially for banking data like account types, branch codes)\\n3. SQL scripts to handle null values appropriately for financial data\\n4. Data validation rules for account balances and transaction integrity\\n5. Scripts for ongoing data quality monitoring in banking context\\n6. Compliance considerations for financial data corrections"
+      },
+      "id": "openai-llm-uuid",
+      "name": "LLM Data Quality Advisor",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [1120, 300],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-credentials-id",
+          "name": "OpenAI API Credentials"
+        }
+      },
+      "notes": "Step6: LLM analyzes data quality issues and generates banking-specific SQL scripts with recommendations for fixing identified problems. Uses OpenAI GPT-4 for intelligent script generation considering JP Morgan Chase banking standards."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Final step: Save LLM recommendations and SQL scripts to file\nconst fs = require('fs');\nconst recommendationsPath = '/tmp/data_quality_recommendations.md';\nconst sqlScriptsPath = '/tmp/data_quality_fix_scripts.sql';\n\n// Get LLM response\nconst llmResponse = $input.first().json.text;\n\n// Extract SQL scripts from LLM response\nconst sqlScripts = llmResponse.match(/```sql[\\s\\S]*?```/g) || [];\nconst cleanedScripts = sqlScripts.map(script => \n  script.replace(/```sql\\n?/g, '').replace(/```/g, '')\n).join('\\n\\n-- ========================================\\n\\n');\n\n// Format as Markdown document\nconst markdownContent = `# Data Quality Improvement Recommendations\\n\\nGenerated on: ${new Date().toISOString()}\\nWorkflow: Data Comparison and Quality Analysis\\nTables: ACCOUNT_DB2, ACCOUNT_CKDB\\n\\n## Executive Summary\\n\\nThis report contains AI-generated recommendations for fixing data quality issues identified through automated comparison between DB2 and CockroachDB account data.\\n\\n## LLM Analysis and Recommendations\\n\\n${llmResponse}\\n\\n---\\n\\n**Important Notes:**\\n- Please review all SQL scripts carefully before executing in production environment\\n- Test in development environment first\\n- Ensure proper backup procedures are in place\\n- Consider compliance and regulatory requirements for financial data modifications\\n- Coordinate with database administrators and compliance teams before implementation\\n\\n**Files Generated:**\\n- PDF Report: /tmp/data_comparison_report.pdf\\n- DB2 Data Extract: /tmp/Db2_file.csv\\n- CockroachDB Data Extract: /tmp/CKDB_file.csv\\n- SQL Fix Scripts: /tmp/data_quality_fix_scripts.sql\\n`;\n\n// Save SQL scripts separately\nif (cleanedScripts) {\n  const sqlHeader = `-- Data Quality Fix Scripts\\n-- Generated: ${new Date().toISOString()}\\n-- Source: AI Analysis of DB2 vs CockroachDB Comparison\\n-- WARNING: Review and test before executing in production\\n\\n`;\n  fs.writeFileSync(sqlScriptsPath, sqlHeader + cleanedScripts);\n}\n\n// Write markdown report\nfs.writeFileSync(recommendationsPath, markdownContent);\n\nreturn [{\n  json: {\n    recommendations_file: recommendationsPath,\n    sql_scripts_file: sqlScriptsPath,\n    pdf_report: '/tmp/data_comparison_report.pdf',\n    db2_file: '/tmp/Db2_file.csv',\n    ckdb_file: '/tmp/CKDB_file.csv',\n    workflow_completed: true,\n    completion_time: new Date().toISOString(),\n    total_files_generated: 5,\n    message: 'Data comparison and quality analysis workflow completed successfully. All recommendations and scripts have been generated and saved.'\n  }\n}];"
+      },
+      "id": "final-output-uuid",
+      "name": "Workflow Completion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 300],
+      "notes": "Final step: Save LLM recommendations and provide summary of all generated files and analysis results. Creates both markdown report and separate SQL script files for easy implementation."
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Db2Node",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "CockroachDB Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Db2Node": {
+      "main": [
+        [
+          {
+            "node": "Save DB2 Data to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save DB2 Data to File": {
+      "main": [
+        [
+          {
+            "node": "DataMoverNode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DataMoverNode": {
+      "main": [
+        [
+          {
+            "node": "Apache Spark Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CockroachDB Node": {
+      "main": [
+        [
+          {
+            "node": "Save CKDB Data to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save CKDB Data to File": {
+      "main": [
+        [
+          {
+            "node": "Apache Spark Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apache Spark Node": {
+      "main": [
+        [
+          {
+            "node": "ResultantNode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ResultantNode": {
+      "main": [
+        [
+          {
+            "node": "LLM Data Quality Advisor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Data Quality Advisor": {
+      "main": [
+        [
+          {
+            "node": "Workflow Completion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-08-08T15:27:00.000Z",
+      "updatedAt": "2025-08-08T15:27:00.000Z",
+      "id": "data-quality-tag",
+      "name": "Data Quality Analysis"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-08-08T15:27:00.000Z",
+  "versionId": "workflow-version-1"
+}

@@ -1,0 +1,170 @@
+{
+  "name": "CDC: Kafka → CockroachDB (Serverless) + OpenAI Summary",
+  "nodes": [
+    {
+      "parameters": {
+        "broker": "KAFKA_BROKER_1:9092,KAFKA_BROKER_2:9092",
+        "topic": "db2.bank.accounts",
+        "groupId": "n8n-migration-consumer",
+        "fromBeginning": false,
+        "jsonParseBody": true,
+        "ssl": false,
+        "sasl": "none"
+      },
+      "id": "Kafka Trigger",
+      "name": "Kafka Trigger",
+      "type": "n8n-nodes-base.kafkaTrigger",
+      "typeVersion": 1,
+      "position": [ -60, 300 ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const items = [];\nfor (const item of itemsInput) {\n  const msg = item.json; // Debezium-style\n  const op = msg.op;\n  const after = msg.after || {};\n  const before = msg.before || {};\n\n  // Map fields from CDC payload → table columns\n  // Adjust column names to match your Cockroach schema\n  const cols = [\n    'account_id',\n    'customer_id',\n    'balance',\n    'status',\n    'updated_at'\n  ];\n\n  function sqlValue(v) {\n    if (v === null || v === undefined) return 'NULL';\n    if (typeof v === 'number') return String(v);\n    // basic escape for single quotes\n    return `'${String(v).replace(/'/g, \"''\")}'`;\n  }\n\n  if (op === 'c' || op === 'u' || op === 'r') {\n    const vals = [\n      sqlValue(after.account_id),\n      sqlValue(after.customer_id),\n      sqlValue(after.balance),\n      sqlValue(after.status),\n      after.updated_at ? sqlValue(after.updated_at) : 'NOW()'\n    ];\n\n    const updates = [\n      'customer_id = EXCLUDED.customer_id',\n      'balance = EXCLUDED.balance',\n      'status = EXCLUDED.status',\n      'updated_at = EXCLUDED.updated_at'\n    ];\n\n    const sql = `INSERT INTO bank.accounts (${cols.join(',')})\\nVALUES (${vals.join(',')})\\nON CONFLICT (account_id) DO UPDATE SET ${updates.join(', ')};`;\n    items.push({ json: { action: 'upsert', sql, meta: { op, key: after.account_id } } });\n  } else if (op === 'd') {\n    const sql = `DELETE FROM bank.accounts WHERE account_id = ${sqlValue(before.account_id)};`;\n    items.push({ json: { action: 'delete', sql, meta: { op, key: before.account_id } } });\n  } else {\n    // unknown op → skip\n    items.push({ json: { action: 'skip', sql: null, meta: { op } } });\n  }\n}\nreturn items;"
+      },
+      "id": "Build SQL",
+      "name": "Build SQL",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [ 220, 300 ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{$json.sql}}",
+        "additionalFields": {
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "id": "Cockroach Upsert/Delete",
+      "name": "Cockroach Upsert/Delete",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [ 480, 300 ],
+      "credentials": {
+        "postgres": {
+          "id": "REPLACE_WITH_YOUR_COCKROACH_POSTGRES_CREDENTIAL_ID",
+          "name": "Cockroach Serverless (Postgres wire)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "const stats = this.getWorkflowStaticData('global');\nif (!stats.counters) {\n  stats.counters = { upserts: 0, deletes: 0, skipped: 0, errors: 0, lastEvents: [] };\n}\nfor (const item of itemsInput) {\n  const action = item.json.action;\n  if (action === 'upsert') stats.counters.upserts++;\n  else if (action === 'delete') stats.counters.deletes++;\n  else stats.counters.skipped++;\n  stats.counters.lastEvents.unshift({ ts: new Date().toISOString(), meta: item.json.meta });\n  stats.counters.lastEvents = stats.counters.lastEvents.slice(0, 50);\n}\nreturn itemsInput;"
+      },
+      "id": "Update Counters",
+      "name": "Update Counters",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [ 730, 300 ]
+    },
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyDay",
+              "hour": 18
+            }
+          ]
+        }
+      },
+      "id": "Daily Summary",
+      "name": "Daily Summary",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [ -60, 40 ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const stats = this.getWorkflowStaticData('global');\nconst c = stats.counters || { upserts: 0, deletes: 0, skipped: 0, errors: 0, lastEvents: [] };\nreturn [{ json: c }];"
+      },
+      "id": "Get Counters",
+      "name": "Get Counters",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [ 220, 40 ]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-4o-mini",
+        "chatPrompt": "You are an audit assistant for a bank data migration. Summarize today’s CDC apply stats for the bank.accounts table migrating into CockroachDB. Use concise, auditor-friendly language and include clear next steps if anomalies appear.\\n\\nINPUT JSON (counters): {{$json}}\\n\\nInclude: totals (upserts, deletes, skipped), last 5 keys, and any obvious spikes or patterns. End with a one-line compliance note.",
+        "temperature": 0.2
+      },
+      "id": "OpenAI Summary",
+      "name": "OpenAI Summary",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 4,
+      "position": [ 480, 40 ],
+      "credentials": {
+        "openAiApi": {
+          "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "append",
+        "fileName": "migration-daily-summary-{{$now}}.txt",
+        "data": "={{$json.choices && $json.choices[0] && $json.choices[0].message && $json.choices[0].message.content ? $json.choices[0].message.content : $json.text || 'No content'}}",
+        "encoding": "utf8"
+      },
+      "id": "Save Summary File",
+      "name": "Save Summary File",
+      "type": "n8n-nodes-base.writeBinaryFile",
+      "typeVersion": 1,
+      "position": [ 740, 40 ]
+    }
+  ],
+  "connections": {
+    "Kafka Trigger": {
+      "main": [
+        [
+          { "node": "Build SQL", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Build SQL": {
+      "main": [
+        [
+          { "node": "Cockroach Upsert/Delete", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Cockroach Upsert/Delete": {
+      "main": [
+        [
+          { "node": "Update Counters", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Daily Summary": {
+      "main": [
+        [
+          { "node": "Get Counters", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Get Counters": {
+      "main": [
+        [
+          { "node": "OpenAI Summary", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "OpenAI Summary": {
+      "main": [
+        [
+          { "node": "Save Summary File", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "meta": {
+    "templateCredsReminder": "After import, open each node and select/set your credentials.",
+    "notes": "Kafka → Debezium CDC → Build SQL → Cockroach (UPSERT/DELETE); daily OpenAI summary written to local file."
+  },
+  "active": false
+}
+
