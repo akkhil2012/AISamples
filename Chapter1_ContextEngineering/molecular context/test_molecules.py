@@ -59,3 +59,36 @@ def test_create_molecular_context_chain_of_thought():
     assert result == expected
 
 
+def test_create_molecular_context_with_empty_examples():
+    instruction = "Summarize the text:"
+    examples = []
+    new_input = "Large language models are useful."
+
+    expected = (
+        "Summarize the text:\n\n"
+        "Input: Large language models are useful.\n"
+        "Output:"
+    )
+
+    result = create_molecular_context(instruction, examples, new_input)
+    assert result == expected
+
+
+def test_create_molecular_context_invalid_format_type_graceful():
+    instruction = "Do something:"
+    examples = [
+        {"input": "A", "output": "B"},
+    ]
+    new_input = "C"
+
+    # Unknown format_type should skip example rendering and still produce final Input/Output
+    expected = (
+        "Do something:\n\n"
+        "Input: C\n"
+        "Output:"
+    )
+
+    result = create_molecular_context(instruction, examples, new_input, format_type="unknown")
+    assert result == expected
+
+
