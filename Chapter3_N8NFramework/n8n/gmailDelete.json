@@ -1,0 +1,546 @@
+{
+  "name": "Prompt Orchestrator: Classify & Delegate",
+  "nodes": [
+    {
+      "id": "WebhookIn",
+      "name": "Webhook In /orchestrate",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [-1100, 0],
+      "parameters": {
+        "path": "orchestrate",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "responseData": "allEntries",
+        "options": {
+          "responseData": {}
+        }
+      }
+    },
+    {
+      "id": "ExtractPrompt",
+      "name": "Extract Prompt",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [-900, 0],
+      "parameters": {
+        "functionCode": "const body = items[0].json.body || {};\nconst query = items[0].json.query || {};\nconst prompt = (body.prompt ?? query.prompt ?? items[0].json.prompt ?? '').toString().trim();\nreturn [{ json: { prompt } }];"
+      }
+    },
+    {
+      "id": "Classify",
+      "name": "Classify Intent (Rules)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [-690, 0],
+      "parameters": {
+        "functionCode": "/*\nSimple rules-based classifier.\nSwap to an LLM later by adding an OpenAI node and replacing this.\n*/\nconst prompt = (items[0].json.prompt || '').toLowerCase();\nlet intent = 'human_support';\nlet confidence = 0.55;\nconst entities = {};\n\nfunction hasAny(...words){ return words.some(w => prompt.includes(w)); }\n\nif (hasAny('balance', 'available funds', 'remaining balance', 'how much money')) {\n  intent = 'balance_inquiry'; confidence = 0.85;\n}\nelse if (hasAny('loan status', 'my loan', 'application status', 'emi', 'interest rate')) {\n  intent = 'loan_status'; confidence = 0.8;\n}\nelse if (hasAny('fraud', 'unauthorized', 'suspicious', 'chargeback', 'dispute')) {\n  intent = 'fraud_report'; confidence = 0.9;\n}\nelse if (hasAny('open account', 'create account', 'new account', 'onboard')) {\n  intent = 'open_account'; confidence = 0.75;\n}\n\n// Quick entity guesses (examples)\nconst acctMatch = prompt.match(/account(?:\\s*number)?\\s*(\\d{3,})/);\nif (acctMatch) entities.account_number = acctMatch[1];\n\nreturn [{ json: { prompt: items[0].json.prompt, intent, entities, confidence } }];"
+      }
+    },
+    {
+      "id": "LowConfidence",
+      "name": "Confidence < 0.7 ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [-470, 120],
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.confidence}}",
+              "operation": "smaller",
+              "value2": 0.7
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "Clarify",
+      "name": "Clarify Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [-240, 250],
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "message",
+              "value": "I couldn’t confidently route your request. Please clarify if this is about balance, loan status, fraud, or opening an account."
+            }
+          ],
+          "json": [
+            {
+              "name": "classification",
+              "value": "={{ { intent: $json.intent, confidence: $json.confidence, entities: $json.entities } }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "Route",
+      "name": "Route by Intent",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [-470, -100],
+      "parameters": {
+        "value": "={{$json.intent}}",
+        "rules": {
+          "rules": [
+            { "type": "equal", "value": "balance_inquiry" },
+            { "type": "equal", "value": "loan_status" },
+            { "type": "equal", "value": "fraud_report" },
+            { "type": "equal", "value": "open_account" },
+            { "type": "equal", "value": "human_support" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "PrepBalance",
+      "name": "Prep Balance Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [-260, -320],
+      "parameters": {
+        "values": {
+          "json": [
+            { "name": "account_number", "value": "={{$json.entities.account_number || ''}}" },
+            { "name": "prompt", "value": "={{$json.prompt}}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "SvcBalance",
+      "name": "Balance Service (HTTP)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [-30, -320],
+      "parameters": {
+        "url": "https://backend.example.com/banking/balance",
+        "method": "POST",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "sendBody": true,
+        "bodyParametersJson": "={{$json}}",
+        "options": { "timeout": 60000 }
+      }
+    },
+    {
+      "id": "PrepLoan",
+      "name": "Prep Loan Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [-260, -160],
+      "parameters": {
+        "values": {
+          "json": [
+            { "name": "application_id", "value": "={{$json.entities.application_id || ''}}" },
+            { "name": "account_number", "value": "={{$json.entities.account_number || ''}}" },
+            { "name": "prompt", "value": "={{$json.prompt}}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "SvcLoan",
+      "name": "Loan Service (HTTP)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [-30, -160],
+      "parameters": {
+        "url": "https://backend.example.com/loans/status",
+        "method": "POST",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "sendBody": true,
+        "bodyParametersJson": "={{$json}}",
+        "options": { "timeout": 60000 }
+      }
+    },
+    {
+      "id": "PrepFraud",
+      "name": "Prep Fraud Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [-260, 0],
+      "parameters": {
+        "values": {
+          "json": [
+            { "name": "account_number", "value": "={{$json.entities.account_number || ''}}" },
+            { "name": "prompt", "value": "={{$json.prompt}}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "SvcFraud",
+      "name": "Fraud Service (HTTP)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [-30, 0],
+      "parameters": {
+        "url": "https://backend.example.com/fraud/report",
+        "method": "POST",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "sendBody": true,
+        "bodyParametersJson": "={{$json}}",
+        "options": { "timeout": 60000 }
+      }
+    },
+    {
+      "id": "PrepOpen",
+      "name": "Prep OpenAcct Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [-260, 160],
+      "parameters": {
+        "values": {
+          "json": [
+            { "name": "customer_name", "value": "={{$json.entities.name || ''}}" },
+            { "name": "prompt", "value": "={{$json.prompt}}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "SvcOpen",
+      "name": "Open Account Service (HTTP)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [-30, 160],
+      "parameters": {
+        "url": "https://backend.example.com/accounts/open",
+        "method": "POST",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "sendBody": true,
+        "bodyParametersJson": "={{$json}}",
+        "options": { "timeout": 60000 }
+      }
+    },
+    {
+      "id": "PrepHuman",
+      "name": "Prep Human Support",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [-260, -10],
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "message", "value": "Routing to human support." }
+          ],
+          "json": [
+            { "name": "prompt", "value": "={{$json.prompt}}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "SvcHuman",
+      "name": "Create Ticket (HTTP)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [-30, -10],
+      "parameters": {
+        "url": "https://backend.example.com/support/tickets",
+        "method": "POST",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "sendBody": true,
+        "bodyParametersJson": "={{$json}}",
+        "options": { "timeout": 60000 }
+      }
+    },
+    {
+      "id": "FormatBalance",
+      "name": "Format Resp: Balance",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [200, -320],
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "json": [
+            { "name": "intent", "value": "balance_inquiry" },
+            { "name": "result", "value": "={{$json}}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "FormatLoan",
+      "name": "Format Resp: Loan",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [200, -160],
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "json": [
+            { "name": "intent", "value": "loan_status" },
+            { "name": "result", "value": "={{$json}}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "FormatFraud",
+      "name": "Format Resp: Fraud",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [200, 0],
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "json": [
+            { "name": "intent", "value": "fraud_report" },
+            { "name": "result", "value": "={{$json}}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "FormatOpen",
+      "name": "Format Resp: OpenAcct",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [200, 160],
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "json": [
+            { "name": "intent", "value": "open_account" },
+            { "name": "result", "value": "={{$json}}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "FormatClarify",
+      "name": "Format Resp: Clarify",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [200, 250],
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "json": [
+            { "name": "intent", "value": "clarification_needed" },
+            { "name": "result", "value": "={{$json}}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "Respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [430, -40],
+      "parameters": {
+        "responseBody": "={{$json}}",
+        "responseCode": 200
+      }
+    },
+    {
+      "id": "ErrTrig",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [-1100, 300],
+      "parameters": {}
+    },
+    {
+      "id": "ErrFormat",
+      "name": "Format Error Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [-900, 300],
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "json": [
+            { "name": "error", "value": "={{$json.execution?.error?.message || 'Unhandled error'}}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ErrRespond",
+      "name": "Respond Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [-690, 300],
+      "parameters": {
+        "responseBody": "={{$json}}",
+        "responseCode": 500
+      }
+    },
+    {
+      "id": "Sticky",
+      "name": "READ ME",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-1100, -220],
+      "parameters": {
+        "notes": "POST to /orchestrate with JSON: { \"prompt\": \"<user text>\" }\nBackends are placeholders. Replace URLs with your services.\nLow-confidence (<0.7) requests ask for clarification.\nTo use an LLM for classification: Add an OpenAI Chat node after Extract Prompt, prompt it to return JSON {intent, entities, confidence}, then remove the current 'Classify Intent (Rules)' node and wire the OpenAI node into 'LowConfidence' and 'Route by Intent'."
+      }
+    }
+  ],
+  "connections": {
+    "Webhook In /orchestrate": {
+      "main": [
+        [
+          { "node": "Extract Prompt", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Extract Prompt": {
+      "main": [
+        [
+          { "node": "Classify Intent (Rules)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Classify Intent (Rules)": {
+      "main": [
+        [
+          { "node": "Confidence < 0.7 ?", "type": "main", "index": 0 },
+          { "node": "Route by Intent", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Confidence < 0.7 ?": {
+      "main": [
+        [
+          { "node": "Clarify Request", "type": "main", "index": 0 }
+        ],
+        []
+      ]
+    },
+    "Clarify Request": {
+      "main": [
+        [
+          { "node": "Format Resp: Clarify", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Route by Intent": {
+      "main": [
+        [
+          { "node": "Prep Balance Payload", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Prep Loan Payload", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Prep Fraud Payload", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Prep OpenAcct Payload", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Prep Human Support", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Prep Balance Payload": {
+      "main": [
+        [
+          { "node": "Balance Service (HTTP)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Prep Loan Payload": {
+      "main": [
+        [
+          { "node": "Loan Service (HTTP)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Prep Fraud Payload": {
+      "main": [
+        [
+          { "node": "Fraud Service (HTTP)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Prep OpenAcct Payload": {
+      "main": [
+        [
+          { "node": "Open Account Service (HTTP)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Prep Human Support": {
+      "main": [
+        [
+          { "node": "Create Ticket (HTTP)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Balance Service (HTTP)": {
+      "main": [
+        [
+          { "node": "Format Resp: Balance", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Loan Service (HTTP)": {
+      "main": [
+        [
+          { "node": "Format Resp: Loan", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Fraud Service (HTTP)": {
+      "main": [
+        [
+          { "node": "Format Resp: Fraud", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Open Account Service (HTTP)": {
+      "main": [
+        [
+          { "node": "Format Resp: OpenAcct", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Format Resp: Balance": { "main": [ [ { "node": "Respond to Webhook", "type": "main", "index": 0 } ] ] },
+    "Format Resp: Loan": { "main": [ [ { "node": "Respond to Webhook", "type": "main", "index": 0 } ] ] },
+    "Format Resp: Fraud": { "main": [ [ { "node": "Respond to Webhook", "type": "main", "index": 0 } ] ] },
+    "Format Resp: OpenAcct": { "main": [ [ { "node": "Respond to Webhook", "type": "main", "index": 0 } ] ] },
+    "Format Resp: Clarify": { "main": [ [ { "node": "Respond to Webhook", "type": "main", "index": 0 } ] ] },
+    "Create Ticket (HTTP)": {
+      "main": [
+        [
+          { "node": "Format Resp: Fraud", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          { "node": "Format Error Response", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Format Error Response": {
+      "main": [
+        [
+          { "node": "Respond Error", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "version": 2
+}

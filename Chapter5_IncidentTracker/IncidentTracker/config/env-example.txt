@@ -1,0 +1,49 @@
+# Environment Variables for Error Resolution System
+# Copy this file to .env and fill in your actual values
+
+# Mistral AI Configuration
+MISTRAL_API_KEY=your_mistral_api_key_here
+MISTRAL_MODEL=mistral-large-latest
+
+# Microsoft Graph API Configuration
+MICROSOFT_CLIENT_ID=your_azure_app_client_id
+MICROSOFT_CLIENT_SECRET=your_azure_app_client_secret
+MICROSOFT_TENANT_ID=your_azure_tenant_id
+
+# Confluence Configuration
+CONFLUENCE_URL=https://your-domain.atlassian.net
+CONFLUENCE_USERNAME=your_confluence_username
+CONFLUENCE_API_TOKEN=your_confluence_api_token
+
+# Application Configuration
+APP_HOST=localhost
+APP_PORT=8000
+DEBUG=True
+LOG_LEVEL=INFO
+
+# Database Configuration
+DATABASE_URL=sqlite:///./error_resolution.db
+
+# MCP Server Ports
+CONFLUENCE_MCP_PORT=8001
+TEAMS_MCP_PORT=8002
+OUTLOOK_MCP_PORT=8003
+LOCAL_DISK_MCP_PORT=8004
+
+# Search Configuration
+MAX_SEARCH_RESULTS=50
+SEARCH_TIMEOUT_SECONDS=30
+ENABLE_CACHING=True
+
+# File Search Configuration
+LOCAL_SEARCH_PATHS=/path/to/documents,/path/to/logs,/path/to/runbooks
+ALLOWED_FILE_EXTENSIONS=.txt,.md,.pdf,.docx,.log,.json,.yaml,.yml
+
+# Rate Limiting
+RATE_LIMIT_REQUESTS_PER_MINUTE=60
+RATE_LIMIT_BURST_SIZE=10
+
+# Security
+SECRET_KEY=your_secret_key_for_jwt_tokens
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30

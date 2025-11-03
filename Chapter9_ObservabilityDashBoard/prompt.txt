@@ -1,0 +1,14 @@
+Create a workflow that explains following: Orchestrating proactive workflows with Observability Systems 
+
+I want to represent the services which are SaaS based applications as nodes of the forced network graph of d3js.
+I want user to have provision to select one or many nodes at once and trigger them simultaneously.
+Trigger in above sentence means when a run button corresponding  to each of above node is clicked it should call the corresponding
+Backend python fast API service exclusively.
+Each fast api service will process the request prompt data in following manner:
+  Step1: It will check for prompt level somatic cache and calculate the rank and if found relevant should respond back to user.
+  Step2: If Step1 above not able to find the response in cache; fast api should call the corresponding node specific local hosted reasoning small language model and check for semantic each at the model level
+  Step3: If Step2 also not able to figure out the response; the prompt data should be sent to underlying corresponding Vector DB/Embedding database  and fetch response based on similarity search using metadata
+  Step4: If Step3 also not able to find the response; API should AI agents each defined as Model Context protocol tools to get the
+ Response from properitry data sources say, confluence page, gitHub.
+  Step5: if step 4 also not able to find the response; lets it call the enterprise level hosted LLM model hosted on AWS Bedrock based on weather prompt is for reasoning or for image generation.
+Once the flow is completed and response is sent back to end user it should be displayed as .pdf file on foreground of each corresponding node define in network graph above.

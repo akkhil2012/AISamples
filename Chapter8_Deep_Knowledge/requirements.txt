@@ -1,0 +1,8 @@
+protobuf
+langextract==1.0.8
+python-dotenv
+google-genai==1.30.0
+pydantic
+neo4j
+qdrant-client
+sentence-transformers

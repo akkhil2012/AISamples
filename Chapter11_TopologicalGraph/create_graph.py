@@ -1,0 +1,217 @@
+import os
+
+# The complete HTML and JavaScript code is embedded as a multi-line string.
+html_template = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>D3.js Force-Directed Graph</title>
+    <style>
+        /* General styling for the graph elements */
+        .node {
+            stroke: #fff;
+            stroke-width: 1.5px;
+            fill: steelblue;
+            cursor: pointer;
+        }
+
+        .node.selected {
+            stroke: #ff0000; /* Red border for selected nodes */
+            stroke-width: 3px;
+        }
+
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+
+        /* Styling for the modal window */
+        .modal {
+            position: absolute; /* Allows positioning relative to the page */
+            background-color: #fefefe;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+            z-index: 10;
+            display: none; /* Hidden by default */
+            font-family: sans-serif;
+        }
+
+        .modal .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        #runButton {
+            margin: 10px;
+            padding: 10px 15px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Button to trigger action on selected nodes -->
+    <button id="runButton">Run Action on Selected Nodes</button>
+
+    <!-- Container for the D3 graph -->
+    <div id="graph-container"></div>
+
+    <!-- Include the D3.js library -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script>
+        // --- 1. SETUP AND DATA ---
+        const width = 960;
+        const height = 600;
+
+        // Default dataset with 5 nodes
+        const nodes = [
+            { id: 0, name: "Node A", selected: false },
+            { id: 1, name: "Node B", selected: false },
+            { id: 2, name: "Node C", selected: false },
+            { id: 3, name: "Node D", selected: false },
+            { id: 4, name: "Node E", selected: false }
+        ];
+
+        const links = [
+            { source: 0, target: 1 },
+            { source: 0, target: 2 },
+            { source: 1, target: 3 },
+            { source: 2, target: 4 },
+            { source: 3, target: 4 }
+        ];
+
+        // --- 2. CREATE SVG AND SIMULATION ---
+        const svg = d3.select("#graph-container")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const simulation = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(links).id(d => d.id).distance(100))
+            .force("charge", d3.forceManyBody().strength(-300))
+            .force("center", d3.forceCenter(width / 2, height / 2));
+
+        // --- 3. DEFINE GRAPH ELEMENTS (LINKS AND NODES) ---
+        const link = svg.append("g")
+            .selectAll("line")
+            .data(links)
+            .enter().append("line")
+            .attr("class", "link");
+
+        const node = svg.append("g")
+            .selectAll("circle")
+            .data(nodes)
+            .enter().append("circle")
+            .attr("r", 15)
+            .attr("class", "node")
+            .on("click", handleNodeClick) // Attach click handler
+            .call(d3.drag() // Enable dragging
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+
+        node.append("title").text(d => d.name); // Tooltip
+
+        // --- 4. SIMULATION TICK FUNCTION ---
+        simulation.on("tick", () => {
+            link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+            node
+                .attr("cx", d => d.x)
+                .attr("cy", d => d.y);
+        });
+        
+        // --- 5. MODAL AND CLICK LOGIC ---
+
+        function showModal(event, d) {
+            // Remove any existing modals first
+            d3.selectAll(".modal").remove();
+            
+            const modal = d3.select("body").append("div")
+                .attr("class", "modal")
+                .style("display", "block")
+                .style("left", (d.x + 20) + "px") // Position next to the node
+                .style("top", (d.y - 20) + "px");
+
+            modal.html(`
+                <span class="close-button">&times;</span>
+                <h4>Prompt for ${d.name}</h4>
+                <p>Enter a value:</p>
+                <input type="text" id="modal-input" placeholder="Type here...">
+                <button id="modal-submit">Submit</button>
+            `);
+
+            // Add event listeners for the modal's close and submit buttons
+            modal.select(".close-button").on("click", () => modal.remove());
+            modal.select("#modal-submit").on("click", () => {
+                const inputValue = modal.select("#modal-input").property("value");
+                alert(`Submitted for ${d.name}: ${inputValue}`);
+                modal.remove();
+            });
+        }
+
+        function handleNodeClick(event, d) {
+            if (event.shiftKey) {
+                // --- MULTI-SELECT LOGIC (with Shift key) ---
+                d.selected = !d.selected; // Toggle selection state
+                d3.select(this).classed("selected", d.selected);
+            } else {
+                // --- SINGLE CLICK LOGIC (show modal) ---
+                showModal(event, d);
+            }
+        }
+        
+        // --- 6. RUN BUTTON LOGIC ---
+        d3.select("#runButton").on("click", () => {
+            const selectedNodes = nodes.filter(n => n.selected);
+            if (selectedNodes.length === 0) {
+                alert("No nodes selected. Hold 'Shift' and click on nodes to select them.");
+                return;
+            }
+            // Trigger the modal for each selected node
+            selectedNodes.forEach((d, i) => {
+                 // We pass a null event, and the data `d`
+                showModal(null, d);
+            });
+        });
+
+        // --- 7. DRAG FUNCTIONS ---
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+    </script>
+</body>
+</html>
+"""
+
+# Write the HTML content to a file
+file_path = "d3_force_graph.html"
+with open(file_path, "w") as f:
+    f.write(html_template)
+
+print(f"✅ Successfully created '{os.path.abspath(file_path)}'")
+print("Open this file in your web browser to view the graph.")
+

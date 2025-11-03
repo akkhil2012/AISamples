@@ -1,0 +1,118 @@
+Please create me a json file that I can import in n8n workflow so I can accomplish the below:
+I want the nodes to use the prompts to define the configurations for all nodes using openAI prompts
+
+The n8n prompts should have the below 5 nodes:
+DB2 node named as Db2Node, DataMoverNode , cockroachDB node, AWS s3 bucket Node , Apache spark Node , ResultantNode a simple node that generates .pdf file
+
+The data should reside table name say ACCOUNT_DB2 with same DDL with additional few columns in CockRoachDB
+THE table column should resemble how in general practice a current account would have; say in JP Morgan and chase bank
+Need to insert thousands of data in the tables defined for DB2 say ACCOUNT_DB2
+Need to insert thousands of data in the tables defined for CockRoachDB say ACCOUNT_CKDB
+
+Step1: Db2Node need to pull data from db2 in large batch size and store in a file in local disk, say Db2_file
+  The data in table should be in thousands
+Step2: DataMoverNode n8n node Need to push the data from the file we have created in step1 to AWS s3 bucket.
+Step3: I need to pull data from cockroachDB in large batch size and store in a file in local disk, say CKDB_file
+Step4: Use the Apache spark job to compare the data across the two files we created above in Step1 and Step2.
+      The comparison should be done both in terms of data quality and also based on attribute level mismatches
+Step5:Apache Spark should generate the details comparison report showing the data mismatch between table
+   To ResultantNode which should generate the result in .pdf file format
+Step6: LLM should recommend and create the scripts to fix the data quality issue
+
+=====
+
+Simple prompt:
+
+
+Please create me a json file that I can import in n8n workflow so I can accomplish the below:
+I want the nodes to use the prompts to define the configurations for all nodes using openAI prompts
+
+The n8n prompts should have the below 4 nodes:
+DB2 n8n node named as Db2Node,
+cockroachDB n8n node
+Apache spark n8n Node
+
+The data should reside table name say ACCOUNT_DB2 with same DDL with additional few columns in CockRoachDB
+THE table column should resemble how in general practice a current account would have; say in JP Morgan and chase bank
+Need to insert thousands of data in the tables defined for DB2 say ACCOUNT_DB2
+Need to insert thousands of data in the tables defined for CockRoachDB say ACCOUNT_CKDB
+Step1: Db2Node need to pull data from db2 in large batch size and store in a file in local disk, say Db2_file
+  The data in table should be in thousands
+Step2: cockroachDB node need to pull data from cockroachDB in large batch size and store in a file in local disk, say CKDB_file
+Step3: Use the Apache spark job to compare the data across the two files we created above in Step1 and Step2.
+      The comparison should be done both in terms of data quality and also based on attribute level mismatches
+Apache Spark should generate the details comparison report showing the data mismatch between table
+   To ResultantNode which should generate the result in .pdf file format
+
+
+=========
+STEPS:
+=====
+
+1. DOCKER db2
+
+
+
+===========
+Lead generation n8n
+====
+https://github.com/AIAnytime/Lead-Generation-AI-Agents-App
+
+Serperdev key: 7993b0af3900f3d222c00aae680f57c9d565c98e
+
+
+Firecrawl API:
+fc-121b12d7b8cf4915bf30b93930cacb28
+
+New key: Bearer fc-53848e6acdfd47f880aad8992deea371
+
+
+Please summarize the README.md hosted at https://github.com/microsoft/generative-ai-for-beginners/tree/main/03-using-generative-ai-responsibly It should cover the major highlights and their relevant resources
+
+
+
+AI Anytime:
+
+Users/akhil/Desktop/YoutubeChannel/Chapter3
+tell me top 5 IA companies in hyderabad
+
+
+
+==========
+CONTENTS:
+Tell me top 10 AI companies in Hyderabad by revenue
+
+==========
+https://github.com/microsoft/generative-ai-for-beginners
+
+
+1. Context-Engineering
+
+2. LLM:
+     Model Classification
+   Specialized Model Categories
+   Audio/Speech Recognition: Whisper-type models for multilingual speech recognition
+   Image Generation: DALL-E (available through Azure OpenAI) and Midjourney
+   Text Generation: GPT-3.5 to GPT-4 (with varying costs, GPT-4 being most expensive)
+   Multi-modal: GPT-4 Turbo with Vision and GPT-4o for combining text and visual understanding
+   Open Source vs. Proprietary Models
+   Model Architecture: 
+      Decoder Only
+      Encoder Only
+      Encoder-Decoder
+   Approach to improve the LLM Model Performance
+     1. Prompt Engineering with Context
+     2. RAG
+     3. Fine Tuned Models: With updated Wights and Biases
+
+
+
+3. RAG: Retrival Augmentation Generation
+
+4. MCP: 
+
+4. Agentic WorkFlow: n8n
+
+5.
+
+
