@@ -1,1 +1,32 @@
+1.Precision?
 Banks aim for precision > 0.97 for sensitive flows (online purchases, cross-border transactions) while maintaining recall at an acceptable level.
+
+2.Feature Engineering
+2.1 Transaction-Level Features
+Amount, merchant category, terminal type
+Time of day, day of week
+Device fingerprint, browser metadata
+Geolocation, IP, risky markets
+Sequential frequency (burst transactions)
+
+2.2 Customer Behavioral Features
+Typical spending pattern
+Daily/monthly averages
+Transaction velocity
+Time between consecutive transactions
+Preferred merchants/categories
+
+2.3 Network/Graph Features
+Shared devices, IP addresses
+Merchant–user bipartite graph
+Fraud rings & collusion patterns
+
+
+2.4 ML models:
+Gradient Boosting Trees (XGBoost / LightGBM)
+Best for real-time scoring
+Handles non-linear interactions
+Easily explainable → important for RBI/PCI compliance
+Typically give precision > 0.95 with tuned thresholds
+
+Use precision-recall curve instead of ROC.
