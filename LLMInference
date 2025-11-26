@@ -1,0 +1,278 @@
+WEEK 1 — Foundations (Architecture + Concepts)
+
+Outcome: You understand HOW vLLM works and WHY it is the industry standard.
+
+Day 1 — The “Why” Behind vLLM
+
+Read the vLLM overview + blog posts
+Focus on:
+
+Why LLM inference is slow
+
+KV Cache reuse
+
+GPU memory inefficiency
+
+Deliverable: 1-page doc summarizing: “Why banks need optimized LLM inference.”
+
+Day 2 — PagedAttention (Core innovation)
+
+This is the heart of vLLM.
+Learn:
+
+What is KV Cache?
+
+Why naïve caching fails at high concurrency
+
+How PagedAttention partitions memory like OS paging
+
+Deliverable:
+
+Draw a simple diagram of paged KV cache vs naïve KV cache (you can do rough sketch, I can convert to PPT).
+
+Day 3 — Continuous Batching
+
+Learn:
+
+How batching works in normal inference engines
+
+Why they cannot accept “mid-flight” requests
+
+How vLLM allows dynamic batching to maximize GPU utilization
+
+Deliverable:
+
+Write a 6–8 bullet comparison: TorchServe / Triton / HuggingFace Text Generation Inference vs vLLM.
+
+Day 4 — Token Parallelism & Scheduling
+
+Focus:
+
+How vLLM schedules token generation
+
+How it handles multiple concurrent requests
+
+Throughput vs latency tradeoff
+
+Deliverable:
+
+Brief write-up:
+“How JPMC chatbot platforms / copilot services could use token scheduling to improve p95 latency.”
+
+Day 5 — Multi-Model, Multi-Tenant Architecture
+
+Learn:
+
+Weight caching
+
+Model registry
+
+Shared GPU memory across models
+
+Implications for enterprise MLOps
+
+Deliverable:
+
+Diagram of a multi-tenant inference platform using vLLM-style architecture.
+
+Day 6 — API Surface + Serving Workflow
+
+You don’t need every detail.
+Focus on:
+
+Async APIs
+
+Streaming responses
+
+OpenAI-compatible API
+
+Deliverable:
+
+Write down:
+“What happens inside vLLM from request → output tokens?”
+
+Day 7 — Week 1 Summary + Internal Pitch Draft (1 page)
+
+Create:
+
+“What I learned from vLLM” (technical summary)
+
+“Why this matters for JPMC AI infra” (business summary)
+
+WEEK 2 — Hands-on + Cost/Latency Modeling
+
+Outcome: You can run & benchmark vLLM and connect it to business impact.
+
+Day 8 — Setup vLLM Locally (CPU only is enough initially)
+
+Steps:
+
+Pull vLLM Docker
+
+Run a small model (LLaMA-3 8B / Mistral 7B)
+
+Deliverable:
+
+Run 2–3 test prompts
+
+Note the latency numbers
+
+Day 9 — Throughput Benchmarking
+
+Run:
+
+Single request
+
+5 concurrent requests
+
+20 concurrent requests
+
+Deliverable:
+
+Create a small table:
+
+Requests
+
+Latency
+
+Tokens/sec
+
+Observations
+
+Day 10 — Compare vLLM vs normal model serving
+
+Using HF Transformers pipeline or llama.cpp.
+
+Deliverable:
+
+1–page:
+“Why vLLM achieves 3–5x throughput improvement in real scenarios.”
+
+Day 11 — GPU Simulation (Theoretical)
+
+Even if you don’t have a GPU, learn:
+
+How GPU memory is used
+
+FlashAttention vs PagedAttention
+
+KV Cache size modeling (token length × head × dim)
+
+Deliverable:
+
+Create a quick sheet:
+How many concurrent sessions a 24GB GPU can support for: 4K, 8K, 16K context.
+
+Day 12 — Streaming, Batching, and SLA Design
+
+Learn:
+
+Why streaming reduces perceived latency
+
+How batching parameters affect jitter and p95 latency
+
+Deliverable:
+
+Short doc:
+“How to meet <300ms first-token latency for JPMC internal copilots using vLLM-style batching.”
+
+Day 13 — Multi-model Deployment Strategy for Banks
+
+Focus:
+
+PII risk
+
+Model isolation (per LOB)
+
+Model weight sharing
+
+Governance
+
+Token-level logging & audit
+
+Deliverable:
+
+Architecture diagram:
+“Enterprise LLM Inference Platform for Banks (vLLM-inspired).”
+
+Day 14 — Week 2 Summary + Business ROI Note
+
+Create:
+
+A business-case note:
+“How improved inference efficiency saves GPU cost by 30–50%.”
+
+A promotion-ready statement:
+
+“Using my understanding of vLLM, I proposed improvements to our internal LLM serving platform that reduce GPU cost, improve latency, and scale to multiple LOBs.”
+
+WEEK 3 — Final Integration (Optional but HIGH impact)
+
+Outcome: You create artifacts that can be used for promotion, visibility & leadership.
+
+Day 15–17 — Write a 2-page “AI Inference Optimization Roadmap for JPMC”
+
+Include:
+
+What vLLM solves
+
+How JPMC can adopt similar patterns
+
+Proposed POC
+
+Expected benefits
+
+Cost model
+
+SLA improvements
+This is GOLD for your VP-level visibility.
+
+Day 18–19 — Build a small POC (non-production)
+
+Run:
+
+vLLM
+
+Serve a small model
+
+Expose an OpenAI-style API
+
+Integrate with a streamlit chatbot UI
+
+Deliverable:
+
+Simple demo
+
+Shows “enterprise chatbot served via vLLM”.
+
+Day 20–21 — Internal Tech Talk Deck (10 slides)
+
+Topics:
+
+Why inference is the new bottleneck
+
+What is vLLM
+
+PagedAttention architecture
+
+Dynamic batching
+
+GPU utilization improvement
+
+Comparison vs Triton / TGI / Ray Serve
+
+Bank-specific challenges
+
+Proposed internal architecture
+
+Cost ROI
+
+Next steps
+
+You can use this as:
+
+Internal presentation
+
+Promotion artifact
+
+Leadership visibility
