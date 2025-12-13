@@ -2,3 +2,102 @@ Gradient Descent?
 - why GD is important
 - Why some models cannot be trained using GD?
 - can you explain below in plain english Gradient Descent updates parameters using derivatives
+
+
+Week 1: ML Fundamentals + AI Integration
+
+ML pipelines, feature engineering, clustering, outliers
+
+🔗 StatQuest – Machine Learning Fundamentals (playlist)
+https://www.youtube.com/playlist?list=PLblh5JKOoLUICTaGLRoHQDuF_7q2GfuJF
+
+🔗 Krish Naik – End-to-End ML Project Pipeline
+https://www.youtube.com/watch?v=1KpZJ3T8H5k
+
+Week 2: LLM Fundamentals + Embeddings + RAG
+
+Attention, tokens, embeddings, FAISS, RAG
+
+🔗 Jay Alammar – Transformers & Attention (visual explanation)
+https://www.youtube.com/watch?v=4Bdc55j80l8
+
+🔗 Sebastian Raschka – How LLMs Work (tokens, context, training)
+https://www.youtube.com/watch?v=wjZofJX0v4M
+
+🔗 Pinecone – Retrieval Augmented Generation (RAG) Explained
+https://www.youtube.com/watch?v=T-D1OfcDW1M
+
+🔗 FAISS Vector Search Tutorial
+https://www.youtube.com/watch?v=sKYj6SeCq7Y
+
+Week 3: LangChain, LangGraph, LlamaIndex (Agents)
+
+Chains, agents, memory, multi-step reasoning
+
+🔗 LangChain Official Crash Course
+https://www.youtube.com/watch?v=6Z3m7wXn2fI
+
+🔗 LangGraph Explained (Agent workflows)
+https://www.youtube.com/watch?v=H8B2p9gR9AI
+
+🔗 LlamaIndex – Multi-source RAG & Agents
+https://www.youtube.com/watch?v=Yk-unX4KnV4
+
+Week 4: Advanced RAG + Evaluation
+
+Chunking, reranking, hallucination, metrics
+
+🔗 RAG Evaluation Explained (Precision@K, Recall, Faithfulness)
+https://www.youtube.com/watch?v=8h4S6hF8pRo
+
+🔗 Weaviate – Chunking & Hybrid Search Deep Dive
+https://www.youtube.com/watch?v=Q7y9O8VxYbM
+
+Week 5: Agents + AutoGen + DSPy + vLLM
+
+Multi-agent systems, optimization, inference
+
+🔗 Microsoft AutoGen – Multi-Agent AI Explained
+https://www.youtube.com/watch?v=V6U5iJZzjS8
+
+🔗 DSPy Explained (Prompt Optimization)
+https://www.youtube.com/watch?v=0lJKucu6HJc
+
+🔗 vLLM – High-Throughput LLM Inference
+https://www.youtube.com/watch?v=U6r2E0p4x5E
+
+Week 6: Production ML + Monitoring
+
+XGBoost, MLflow, FastAPI, drift detection
+
+🔗 MLflow End-to-End Tutorial
+https://www.youtube.com/watch?v=6t1oLwZy0Xo
+
+🔗 XGBoost Explained Clearly
+https://www.youtube.com/watch?v=OtD8wVaFm6E
+
+🔗 Data Drift & Model Monitoring (KS, PSI)
+https://www.youtube.com/watch?v=KJ9C7Rz3B0U
+
+Week 7: Docker, Kubernetes, CI/CD
+
+Containers, K8s, autoscaling, cloud
+
+🔗 Docker + Kubernetes Full Course (TechWorld with Nana)
+https://www.youtube.com/watch?v=X48VuDVv0do
+
+🔗 CI/CD with GitHub Actions
+https://www.youtube.com/watch?v=R8_veQiYBjI
+
+Week 8: System Design + Interview Prep
+
+LLM system design, leadership, STAR
+
+🔗 System Design for ML & LLMs
+https://www.youtube.com/watch?v=KZz4K5Xf6zA
+
+🔗 LLM System Design Interview (Ex-Google)
+https://www.youtube.com/watch?v=K9Q8i9bYF3k
+
+🔗 Behavioral Interviews – STAR Method
+https://www.youtube.com/watch?v=K4kZKxQy9z8
