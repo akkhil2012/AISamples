@@ -1,59 +1,69 @@
-# Agents
-## Data Certification Agents
+# GenAI-Powered Data Certification Engine
 
-Agents that collaborate to certify data quality and compliance across schema, quality, anomalies, lineage, and policy checks. Orchestrates all signals into an overall score and PASS/CONDITIONAL/FAIL decision.
+Automated data certification workflow for **completeness checks**, **drift detection**, and **audit-ready compliance reports**.
 
-### File
+Implementation file: `data_certification_agents.py`
 
-- `data_certification_agents.py` — Single-script demo containing:
-  - SchemaAgent: required columns, dtypes, constraints, PK uniqueness
-  - QualityAgent: nulls, ranges, uniqueness, referential integrity
-  - AnomalyAgent: IsolationForest (if available) or z‑score fallback
-  - LineageAgent: transform catalog validation and FX consistency check
-  - PolicyAgent: PII masking, region allowlist, retention (demo)
-  - CertificationOrchestrator: runs all agents, weights scores, decides outcome
+## Features
 
-### Requirements
+- **Completeness checks**
+  - required columns
+  - null-rate threshold validation
+  - duplicate primary-key detection
+- **Drift detection with PyTorch**
+  - feature mean-shift checks on numeric columns
+  - autoencoder reconstruction error ratio between baseline and current data
+- **Compliance validation**
+  - PII masking checks
+  - region allowlist enforcement
+  - retention-window checks
+- **GenAI summary with Mistral AI**
+  - Uses `mistral-large-latest` (via API) when `MISTRAL_API_KEY` is available
+  - Falls back to deterministic local summary when key/dependency is unavailable
+
+## Requirements
 
 - Python 3.9+
-- Required: `pandas`, `numpy`
-- Optional (for IsolationForest): `scikit-learn`
+- `pandas`
+- `numpy`
+- `torch`
+- `requests` (optional, needed for Mistral API calls)
 
 Install:
+
 ```bash
-pip install pandas numpy scikit-learn
+pip install pandas numpy torch requests
 ```
 
-### Run
+## Run
 
 ```bash
 python data_certification_agents.py
 ```
 
-The script prints a certification report with agent scores, overall score, decision, and findings.
+The script generates demo baseline/current datasets and prints a JSON report with:
 
-### Demo data and metadata
+- run metadata (`run_id`, `timestamp_utc`)
+- decision (`PASS`, `CONDITIONAL`, `FAIL`)
+- overall weighted score
+- detailed outputs for completeness, drift, and compliance checks
+- audit summary text (Mistral-generated or local fallback)
 
-`demo_dataset()` builds a small synthetic dataset and associated metadata dict with:
-- Schema expectations (required columns, dtypes, constraints, primary key)
-- Data quality config (null thresholds, ranges, reference integrity)
-- Anomaly config (numeric columns, contamination, z-score cutoff)
-- Lineage mappings and a simple FX rule check for `amount_usd`
-- Policy rules (PII column list, allowed regions, masking required, retention)
+## Configuration
 
-### Tuning and experiments
+Use `default_config()` as the starting point. Tune:
 
-- To observe certification transitions, un-comment hints in `__main__`:
-  - Mask PII (replace emails with `***`)
-  - Align `amount_usd` with declared FX rules
-- Adjust agent weights and thresholds in `CertificationOrchestrator`
-- Extend agents with org-specific rules (e.g., stricter referential integrity or policy checks)
+- quality null thresholds
+- drift feature list and sensitivity
+- compliance policy (PII columns, allowed regions, retention days)
+- scoring weights and decision thresholds
+- Mistral model selection
 
-### Output
+## Notes
 
-Console report includes:
-- Agent scores (0–1) and per-agent findings
-- Overall score (weighted) and decision: PASS / CONDITIONAL / FAIL
-- Notes describing next steps to reach PASS
+- The demo intentionally injects quality/compliance/drift issues into current data so you can observe a non-PASS certification path.
+- To use Mistral summary generation, set:
 
-Placeholder content for the agents chapter.
+```bash
+export MISTRAL_API_KEY=<your_key>
+```
