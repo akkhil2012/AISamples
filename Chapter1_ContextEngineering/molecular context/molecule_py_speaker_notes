@@ -1,0 +1,198 @@
+Great question! This code is actually implementing a well-known AI prompting technique. Let me break it down completely.
+
+---
+
+## 🧠 What Is This Code Doing?
+
+This function is building **few-shot prompts** — a technique where you show an AI model a few worked examples *inside the prompt itself* so it understands the pattern before seeing the real question.
+
+The name `create_molecular_context` is a fancy term for what's commonly called **"prompt construction"** or **"in-context learning setup."**
+
+---
+
+## 🔍 Function Signature
+
+```python
+def create_molecular_context(instruction, examples, new_input, format_type="input-output"):
+```
+
+| Parameter | Type | What It Is |
+|---|---|---|
+| `instruction` | `str` | The task description ("Translate to French") |
+| `examples` | `List[Dict]` | Worked examples the model learns from |
+| `new_input` | `str` | The actual question you want answered |
+| `format_type` | `str` | Which prompt template to use (default: input-output) |
+
+---
+
+## 🧩 Step-by-Step Breakdown
+
+### Step 1 — Start with the instruction
+```python
+context = f"{instruction}\n\n"
+```
+This seeds the prompt with the task description. The `\n\n` adds a blank line for clean separation.
+
+**Result so far:**
+```
+Translate the following English sentences to French:
+
+```
+
+---
+
+### Step 2 — Add examples (two modes)
+
+#### Mode A: `input-output` (simple)
+```python
+if format_type == "input-output":
+    for example in examples:
+        context += f"Input: {example['input']}\n"
+        context += f"Output: {example['output']}\n\n"
+```
+Loops through examples and appends each as an Input/Output pair.
+
+**Result after 2 examples:**
+```
+Translate the following English sentences to French:
+
+Input: Hello, how are you?
+Output: Bonjour, comment ça va?
+
+Input: What time is it?
+Output: Quelle heure est-il?
+
+```
+
+This is classic **few-shot prompting** — the model sees the pattern and mimics it.
+
+---
+
+#### Mode B: `chain-of-thought` (reasoning steps)
+```python
+elif format_type == "chain-of-thought":
+    for example in examples:
+        context += f"Input: {example['input']}\n"
+        context += f"Thinking: {example['thinking']}\n"
+        context += f"Output: {example['output']}\n\n"
+```
+Adds a **Thinking** step between input and output — this forces the model to show its reasoning before giving an answer.
+
+**Result after 2 examples:**
+```
+Solve the following math problems step by step:
+
+Input: What is 5 + 3?
+Thinking: I need to add 5 and 3 together.
+Output: 8
+
+Input: What is 10 - 4?
+Thinking: I need to subtract 4 from 10.
+Output: 6
+
+```
+
+This is the famous **Chain-of-Thought (CoT) prompting** technique, shown by Google DeepMind to dramatically improve reasoning accuracy.
+
+---
+
+### Step 3 — Append the real question
+```python
+context += f"Input: {new_input}\nOutput:"
+```
+
+The function deliberately ends with `Output:` but **no answer**. This is the key trick — it's a prompt "cliffhanger" that forces the AI to complete it.
+
+**Final prompt (input-output mode):**
+```
+Translate the following English sentences to French:
+
+Input: Hello, how are you?
+Output: Bonjour, comment ça va?
+
+Input: What time is it?
+Output: Quelle heure est-il?
+
+Input: Where is the nearest restaurant?
+Output:        <--- AI fills this in
+```
+
+**Final prompt (chain-of-thought mode):**
+```
+Solve the following math problems step by step:
+
+Input: What is 5 + 3?
+Thinking: I need to add 5 and 3 together.
+Output: 8
+
+Input: What is 10 - 4?
+Thinking: I need to subtract 4 from 10.
+Output: 6
+
+Input: What is 7 * 6?
+Output:        <--- AI fills this in
+```
+
+Note: In chain-of-thought mode, the final prompt skips `Thinking:` — the model is expected to generate it naturally as part of its completion.
+
+---
+
+## 🗺️ Full Flow Diagram
+
+```
+   instruction
+       +
+   examples[ ]  ──────────────────────────────────────────────┐
+       +                                                        │
+   new_input                                            format_type?
+       │                                                /              \
+       │                                  "input-output"          "chain-of-thought"
+       │                                       │                         │
+       │                            Input / Output pairs      Input / Thinking / Output
+       │                                       │                         │
+       └───────────────────────────────────────┴─────────────────────────┘
+                                               │
+                                       + "Input: {new_input}\nOutput:"
+                                               │
+                                               ▼
+                                   Complete prompt string
+                                   (ready to send to LLM)
+```
+
+---
+
+## 🧪 The `__main__` Section
+
+This is a test harness — it only runs when you execute the file directly (not when imported as a module):
+
+```python
+if __name__ == "__main__":
+```
+
+It runs two demos:
+1. **Translation task** using `input-output` format
+2. **Math task** using `chain-of-thought` format
+
+and `print()`s the resulting prompts to console so you can see what they look like before sending to an LLM.
+
+---
+
+## 🔑 Why "Molecular Context"?
+
+The name is a metaphor — just like molecules are assembled from atoms, this function assembles a **complete reasoning context** from atomic parts (instruction + examples + new input). Each piece alone is meaningless; combined, they give the model everything it needs to answer correctly.
+
+---
+
+## 📊 Technique Comparison
+
+| Technique | Format Type | When to Use | Accuracy |
+|---|---|---|---|
+| Zero-shot | No examples at all | Simple, well-known tasks | Baseline |
+| **Few-shot** | `input-output` | Pattern matching, translation, classification | Better |
+| **Chain-of-Thought** | `chain-of-thought` | Math, reasoning, multi-step logic | Best for complex tasks |
+
+---
+
+## 💡 One-Line Summary
+
+> This function **builds a few-shot prompt** by stacking an instruction + worked examples + the real question, with two modes: plain input-output pairing, or chain-of-thought with explicit reasoning steps — then hands it to an LLM which completes the `Output:` line.
