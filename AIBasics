@@ -47,7 +47,17 @@ How do you handle class imbalance?
 "Class imbalance means the model sees mostly one class and learns to predict it always — 99% accuracy on a 99% majority class dataset is a useless model. Solutions at the data level: oversample the minority class with SMOTE which synthesises new minority points between existing ones, or undersample the majority class. Solutions at the algorithm level: use class weights in the loss function so minority errors cost more, or use focal loss which down-weights easy majority examples and focuses on hard minority examples. At the evaluation level: never use accuracy — use F1, AUC-PR, or recall depending on what false negatives cost."
 
 What is data leakage and how do you prevent it?
-
 "Data leakage is when information from outside the training period or from the target itself flows into features — the model learns a pattern that won't exist at inference time. Types: target leakage (a feature that is only known after the target is determined, like claim approval status predicting claim fraud), temporal leakage (using future data to predict the past), and preprocessing leakage (fitting a scaler or imputer on the full dataset before train-test split, so test statistics bleed into training). Prevention: always split first then preprocess, use pipelines that fit only on training data, and for time-series use strict time-based splits never random splits."
+
+What is Embedding?
+An embedding is a dense low-dimensional vector representation of a high-dimensional object — a word, sentence, user, product, or transaction — where similar objects are close in vector space. They are useful because raw categorical data like user IDs or words cannot be fed to neural networks directly, and one-hot encoding is high-dimensional and sparse. Embeddings compress that into a learned representation where semantic similarity is encoded as geometric proximity — king - man + woman ≈ queen in word2vec. In RAG systems, embeddings enable semantic search: convert documents and queries to vectors, find closest vectors via cosine similarity, retrieve relevant context.
+
+What is attention mechanism and why did it replace RNNs?
+"Attention allows every position in a sequence to directly attend to every other position with a learned weight — the weight represents how relevant that position is to the current one. This solves the core RNN problem: RNNs process sequences step by step and compress all past context into a fixed hidden state, which loses information over long sequences — the vanishing gradient problem means early tokens barely influence the final state. Attention has direct connections between all pairs of tokens so gradients flow directly regardless of sequence length. Transformers stack attention layers and process all positions in parallel — faster training on GPUs and better long-range dependencies than any RNN."
+
+
+Explain the transformer architecture.
+"The transformer consists of an encoder and decoder, each made of stacked identical layers. Each layer has two sub-components: multi-head self-attention which lets every token attend to every other token with multiple learned attention patterns in parallel, and a position-wise feedforward network applied independently to each token. Layer normalisation and residual connections wrap each sub-component for stable training. Since attention has no inherent position sense, positional encodings are added to token embeddings. The encoder processes the input sequence into contextual representations. The decoder generates the output sequence autoregressively, attending to both its own previous outputs and the encoder output via cross-attention."
+
 
 
