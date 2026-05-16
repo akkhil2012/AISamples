@@ -15,49 +15,182 @@ Regularisation prevents overfitting by adding a penalty on large weights to the 
 Vanishing gradient is a training problem in deep networks where gradients shrink exponentially as they propagate backwards through layers via the chain rule — because activation functions like sigmoid and tanh have derivatives less than 1 (sigmoid max is 0.25), multiplying these small values across many layers produces a gradient near zero by the time it reaches early layers, meaning those weights barely update and the network fails to learn long-range dependencies. You see it most severely in deep feedforward networks and RNNs processing long sequences. The fixes are: replacing sigmoid with ReLU whose derivative is 1 for positive inputs so gradients flow unchanged, batch normalisation which keeps activations in a healthy range preventing saturation, residual connections in networks like ResNet which add a skip path giving gradients a highway to flow backwards without passing through every layer, and for RNNs specifically LSTMs which use a gating mechanism with additive rather than multiplicative state updates so gradients can flow across hundreds of timesteps without shrinking.
 
 
-What is the bias-variance tradeoff?
-"Bias is error from wrong assumptions — a model too simple to capture the pattern, like fitting a straight line to curved data. Variance is error from sensitivity to training data — a model so complex it memorises noise. High bias underfits, high variance overfits. The total error is bias² + variance + irreducible noise. The goal is finding the sweet spot — complex enough to learn the pattern, simple enough to generalise. Regularisation, dropout, and ensemble methods all manage this tradeoff."
+Here's a comprehensive set of interview questions and answers across all three areas.
 
-Explain Decision Trees and their problems.
-"A decision tree splits data recursively on the feature that maximises information gain or minimises Gini impurity at each node until leaves are pure or a stopping criterion is met. They are interpretable and handle non-linear boundaries naturally. The core problem is they overfit severely — a fully grown tree memorises training data completely. Solutions are pruning, setting max depth, minimum samples per leaf, or replacing with ensemble methods like Random Forest and Gradient Boosting which fix variance by combining many trees."
+---
 
-Random Forest vs Gradient Boosting — when to use which?
-"Random Forest builds many trees in parallel on random subsets of data and features, then averages predictions — it reduces variance and is robust to outliers, fast to train, and hard to overfit. Gradient Boosting builds trees sequentially where each tree corrects errors of the previous one — it reduces bias and achieves higher accuracy but is slower, sensitive to outliers, and easier to overfit. Use Random Forest when you need robustness and speed, use Gradient Boosting (XGBoost, LightGBM) when you need maximum accuracy on tabular data and have time to tune hyperparameters."
+# Strong Algorithms
 
-How does XGBoost work?
-"XGBoost is gradient boosting with engineering improvements. Each iteration fits a new tree to the negative gradient of the loss function — the residual errors of the current ensemble. XGBoost adds L1 and L2 regularisation directly into the objective, uses second-order Taylor expansion for more accurate gradient estimates, handles missing values natively via learned default directions, and uses column and row subsampling like Random Forest to reduce variance. It also uses a histogram-based split finding algorithm that makes it much faster than naive gradient boosting."
+---
 
-What is the curse of dimensionality?
-"As the number of features grows, the volume of the space grows exponentially and data becomes sparse. In high dimensions, all points become roughly equidistant from each other — which breaks distance-based algorithms like KNN and clustering since nearest neighbour loses meaning. Models need exponentially more data to maintain the same statistical power. Solutions are dimensionality reduction (PCA, UMAP, autoencoders), feature selection (L1 regularisation), and domain-specific feature engineering to remove irrelevant dimensions."
+**Q: What is the bias-variance tradeoff?**
 
-Explain PCA — how it works and when to use it.
-"PCA finds the directions of maximum variance in the data — the principal components — which are orthogonal eigenvectors of the covariance matrix. It projects data onto the top k components, reducing dimensions while preserving maximum variance. Use PCA when features are highly correlated, when you need to visualise high-dimensional data in 2D or 3D, or as a preprocessing step to remove noise and speed up downstream models. The limitation is it only captures linear relationships and the components are not interpretable — use UMAP or t-SNE for non-linear structure."
+> "Bias is error from wrong assumptions — a model too simple to capture the pattern, like fitting a straight line to curved data. Variance is error from sensitivity to training data — a model so complex it memorises noise. High bias underfits, high variance overfits. The total error is bias² + variance + irreducible noise. The goal is finding the sweet spot — complex enough to learn the pattern, simple enough to generalise. Regularisation, dropout, and ensemble methods all manage this tradeoff."
 
-KNN — how it works, pros, cons.
-"KNN classifies a new point by finding the k nearest training points by distance (usually Euclidean or cosine) and taking a majority vote. It is non-parametric — no training phase, the entire dataset is the model. Pros: simple, no assumptions about data distribution, naturally handles multi-class. Cons: slow at inference O(n) per query, breaks in high dimensions (curse of dimensionality), sensitive to irrelevant features and scale — always normalise before KNN. Choose k via cross-validation — small k overfits, large k underfits."
+---
 
-Q: What is the difference between bagging and boosting?
+**Q: Explain Decision Trees and their problems.**
 
-"Bagging trains many models independently on random subsets of data and averages their predictions — it reduces variance. Random Forest is bagging with decision trees plus random feature subsets. Boosting trains models sequentially where each focuses on the mistakes of the previous — it reduces bias. XGBoost and LightGBM are boosting methods. Bagging is harder to overfit and more parallelisable. Boosting achieves higher accuracy but needs careful regularisation to prevent overfitting. For most tabular prediction tasks, boosting wins on accuracy; for robustness and speed, bagging wins.
+> "A decision tree splits data recursively on the feature that maximises information gain or minimises Gini impurity at each node until leaves are pure or a stopping criterion is met. They are interpretable and handle non-linear boundaries naturally. The core problem is they overfit severely — a fully grown tree memorises training data completely. Solutions are pruning, setting max depth, minimum samples per leaf, or replacing with ensemble methods like Random Forest and Gradient Boosting which fix variance by combining many trees."
 
-How do you handle missing data?
-"First understand why data is missing — MCAR (missing completely at random), MAR (missing at random given other features), or MNAR (missing not at random, the value itself causes missingness). For MCAR: mean, median, or mode imputation works. For MAR: model-based imputation using KNN or regression on other features. For MNAR: the missingness is itself a signal — add a binary indicator column. For tree-based models like XGBoost, pass missing values directly since they handle it natively. Never just drop rows blindly — check whether missingness correlates with the target first."
+---
 
-How do you handle class imbalance?
-"Class imbalance means the model sees mostly one class and learns to predict it always — 99% accuracy on a 99% majority class dataset is a useless model. Solutions at the data level: oversample the minority class with SMOTE which synthesises new minority points between existing ones, or undersample the majority class. Solutions at the algorithm level: use class weights in the loss function so minority errors cost more, or use focal loss which down-weights easy majority examples and focuses on hard minority examples. At the evaluation level: never use accuracy — use F1, AUC-PR, or recall depending on what false negatives cost."
+**Q: Random Forest vs Gradient Boosting — when to use which?**
 
-What is data leakage and how do you prevent it?
-"Data leakage is when information from outside the training period or from the target itself flows into features — the model learns a pattern that won't exist at inference time. Types: target leakage (a feature that is only known after the target is determined, like claim approval status predicting claim fraud), temporal leakage (using future data to predict the past), and preprocessing leakage (fitting a scaler or imputer on the full dataset before train-test split, so test statistics bleed into training). Prevention: always split first then preprocess, use pipelines that fit only on training data, and for time-series use strict time-based splits never random splits."
+> "Random Forest builds many trees in parallel on random subsets of data and features, then averages predictions — it reduces variance and is robust to outliers, fast to train, and hard to overfit. Gradient Boosting builds trees sequentially where each tree corrects errors of the previous one — it reduces bias and achieves higher accuracy but is slower, sensitive to outliers, and easier to overfit. Use Random Forest when you need robustness and speed, use Gradient Boosting (XGBoost, LightGBM) when you need maximum accuracy on tabular data and have time to tune hyperparameters."
 
-What is Embedding?
-An embedding is a dense low-dimensional vector representation of a high-dimensional object — a word, sentence, user, product, or transaction — where similar objects are close in vector space. They are useful because raw categorical data like user IDs or words cannot be fed to neural networks directly, and one-hot encoding is high-dimensional and sparse. Embeddings compress that into a learned representation where semantic similarity is encoded as geometric proximity — king - man + woman ≈ queen in word2vec. In RAG systems, embeddings enable semantic search: convert documents and queries to vectors, find closest vectors via cosine similarity, retrieve relevant context.
+---
 
-What is attention mechanism and why did it replace RNNs?
-"Attention allows every position in a sequence to directly attend to every other position with a learned weight — the weight represents how relevant that position is to the current one. This solves the core RNN problem: RNNs process sequences step by step and compress all past context into a fixed hidden state, which loses information over long sequences — the vanishing gradient problem means early tokens barely influence the final state. Attention has direct connections between all pairs of tokens so gradients flow directly regardless of sequence length. Transformers stack attention layers and process all positions in parallel — faster training on GPUs and better long-range dependencies than any RNN."
+**Q: How does XGBoost work?**
 
+> "XGBoost is gradient boosting with engineering improvements. Each iteration fits a new tree to the negative gradient of the loss function — the residual errors of the current ensemble. XGBoost adds L1 and L2 regularisation directly into the objective, uses second-order Taylor expansion for more accurate gradient estimates, handles missing values natively via learned default directions, and uses column and row subsampling like Random Forest to reduce variance. It also uses a histogram-based split finding algorithm that makes it much faster than naive gradient boosting."
 
-Explain the transformer architecture.
-"The transformer consists of an encoder and decoder, each made of stacked identical layers. Each layer has two sub-components: multi-head self-attention which lets every token attend to every other token with multiple learned attention patterns in parallel, and a position-wise feedforward network applied independently to each token. Layer normalisation and residual connections wrap each sub-component for stable training. Since attention has no inherent position sense, positional encodings are added to token embeddings. The encoder processes the input sequence into contextual representations. The decoder generates the output sequence autoregressively, attending to both its own previous outputs and the encoder output via cross-attention."
+---
 
+**Q: What is the curse of dimensionality?**
 
+> "As the number of features grows, the volume of the space grows exponentially and data becomes sparse. In high dimensions, all points become roughly equidistant from each other — which breaks distance-based algorithms like KNN and clustering since nearest neighbour loses meaning. Models need exponentially more data to maintain the same statistical power. Solutions are dimensionality reduction (PCA, UMAP, autoencoders), feature selection (L1 regularisation), and domain-specific feature engineering to remove irrelevant dimensions."
 
+---
+
+**Q: Explain PCA — how it works and when to use it.**
+
+> "PCA finds the directions of maximum variance in the data — the principal components — which are orthogonal eigenvectors of the covariance matrix. It projects data onto the top k components, reducing dimensions while preserving maximum variance. Use PCA when features are highly correlated, when you need to visualise high-dimensional data in 2D or 3D, or as a preprocessing step to remove noise and speed up downstream models. The limitation is it only captures linear relationships and the components are not interpretable — use UMAP or t-SNE for non-linear structure."
+
+---
+
+**Q: KNN — how it works, pros, cons.**
+
+> "KNN classifies a new point by finding the k nearest training points by distance (usually Euclidean or cosine) and taking a majority vote. It is non-parametric — no training phase, the entire dataset is the model. Pros: simple, no assumptions about data distribution, naturally handles multi-class. Cons: slow at inference O(n) per query, breaks in high dimensions (curse of dimensionality), sensitive to irrelevant features and scale — always normalise before KNN. Choose k via cross-validation — small k overfits, large k underfits."
+
+---
+
+**Q: SVM — explain the kernel trick.**
+
+> "SVM finds the hyperplane that maximises the margin between classes — the support vectors are the training points closest to the boundary. For non-linearly separable data, the kernel trick implicitly maps data to a higher dimensional space where a linear boundary exists, without actually computing the transformation. The RBF kernel computes similarity as exp(-γ||x-x'||²) — equivalent to an infinite-dimensional mapping. This gives SVM the ability to learn complex boundaries with the computational cost of a linear classifier. SVMs work well with small high-dimensional datasets but scale poorly to large datasets."
+
+---
+
+**Q: Explain clustering — K-Means vs DBSCAN.**
+
+> "K-Means partitions data into k clusters by iteratively assigning points to the nearest centroid and recomputing centroids until convergence. It assumes spherical clusters of similar size, requires k upfront, and is sensitive to outliers and initialisation. DBSCAN groups points by density — a point is core if it has min_samples neighbours within epsilon distance, and clusters grow by connecting core points. It discovers k automatically, handles arbitrary cluster shapes, and marks outliers explicitly as noise. Use K-Means for well-separated spherical clusters at scale. Use DBSCAN for irregular shapes, unknown k, or when outlier detection matters — like fraud."
+
+---
+
+**Q: What is the difference between bagging and boosting?**
+
+> "Bagging trains many models independently on random subsets of data and averages their predictions — it reduces variance. Random Forest is bagging with decision trees plus random feature subsets. Boosting trains models sequentially where each focuses on the mistakes of the previous — it reduces bias. XGBoost and LightGBM are boosting methods. Bagging is harder to overfit and more parallelisable. Boosting achieves higher accuracy but needs careful regularisation to prevent overfitting. For most tabular prediction tasks, boosting wins on accuracy; for robustness and speed, bagging wins."
+
+---
+
+---
+
+# Data Foundations
+
+---
+
+**Q: How do you handle missing data?**
+
+> "First understand why data is missing — MCAR (missing completely at random), MAR (missing at random given other features), or MNAR (missing not at random, the value itself causes missingness). For MCAR: mean, median, or mode imputation works. For MAR: model-based imputation using KNN or regression on other features. For MNAR: the missingness is itself a signal — add a binary indicator column. For tree-based models like XGBoost, pass missing values directly since they handle it natively. Never just drop rows blindly — check whether missingness correlates with the target first."
+
+---
+
+**Q: How do you handle class imbalance?**
+
+> "Class imbalance means the model sees mostly one class and learns to predict it always — 99% accuracy on a 99% majority class dataset is a useless model. Solutions at the data level: oversample the minority class with SMOTE which synthesises new minority points between existing ones, or undersample the majority class. Solutions at the algorithm level: use class weights in the loss function so minority errors cost more, or use focal loss which down-weights easy majority examples and focuses on hard minority examples. At the evaluation level: never use accuracy — use F1, AUC-PR, or recall depending on what false negatives cost."
+
+---
+
+**Q: What is data leakage and how do you prevent it?**
+
+> "Data leakage is when information from outside the training period or from the target itself flows into features — the model learns a pattern that won't exist at inference time. Types: target leakage (a feature that is only known after the target is determined, like claim approval status predicting claim fraud), temporal leakage (using future data to predict the past), and preprocessing leakage (fitting a scaler or imputer on the full dataset before train-test split, so test statistics bleed into training). Prevention: always split first then preprocess, use pipelines that fit only on training data, and for time-series use strict time-based splits never random splits."
+
+---
+
+**Q: Explain feature engineering for tabular data.**
+
+> "Feature engineering is transforming raw data into representations that expose patterns the model can learn. Key techniques: datetime decomposition into hour, day, month, day-of-week, is-weekend; interaction features by multiplying or dividing correlated columns; aggregation features like rolling mean, max, count over time windows per user; target encoding replacing categories with their mean target value; log transformation to reduce skew in heavy-tailed distributions; binning continuous variables when the relationship is non-linear. For fraud specifically: transaction velocity in last 1h, 24h, 7d; amount deviation from personal baseline; merchant category entropy; geo distance from last transaction."
+
+---
+
+**Q: What is the difference between normalisation and standardisation?**
+
+> "Normalisation (min-max scaling) maps values to [0,1] by subtracting the minimum and dividing by the range — it preserves the shape of the distribution but is sensitive to outliers since a single extreme value compresses all others. Standardisation (z-score) subtracts the mean and divides by standard deviation, centering data at 0 with unit variance — it is robust to outliers and is required for distance-based models like KNN and SVM and for gradient descent to converge efficiently since features on different scales cause elongated loss surfaces. Use normalisation for neural network inputs bounded in range; use standardisation as the default for most ML algorithms."
+
+---
+
+**Q: How do you detect and handle outliers?**
+
+> "Detection methods: statistical — Z-score flags points beyond 3 standard deviations, IQR method flags points beyond 1.5×IQR from quartiles. Model-based — Isolation Forest isolates anomalies by randomly partitioning features, anomalies are isolated in fewer splits. Distance-based — DBSCAN labels low-density points as noise. After detection, options are: remove if genuinely erroneous data entry, cap at percentile thresholds (winsorising) if real but extreme, or keep and use robust models like tree-based methods or Huber loss that are naturally resistant. For fraud detection, outliers are the signal — never remove them blindly."
+
+---
+
+**Q: Explain train, validation, test split — and cross-validation.**
+
+> "Training data is what the model learns from. Validation data is used during development to tune hyperparameters and compare models — it guides decisions so it leaks into model selection. Test data is held out completely and touched only once at the end to give an unbiased estimate of real-world performance. K-fold cross-validation partitions training data into k folds, trains on k-1 and validates on 1 rotating through all folds, then averages performance — more reliable than a single validation split especially on small datasets. For time-series data, use time-based splits where validation is always strictly after training — random splits cause temporal leakage."
+
+---
+
+---
+
+# AI Foundations
+
+---
+
+**Q: What is the difference between supervised, unsupervised, and reinforcement learning?**
+
+> "Supervised learning trains on labelled input-output pairs to learn a mapping — classification and regression. Unsupervised learning finds structure in unlabelled data — clustering, dimensionality reduction, anomaly detection. Reinforcement learning trains an agent to maximise cumulative reward by taking actions in an environment — no labelled data, learning comes from trial and error feedback. Most production AI is supervised. Unsupervised is used for exploration, compression, and anomaly detection. Reinforcement learning powers game-playing agents, robotics, and recommendation systems with delayed reward signals."
+
+---
+
+**Q: What is an embedding and why is it useful?**
+
+> "An embedding is a dense low-dimensional vector representation of a high-dimensional object — a word, sentence, user, product, or transaction — where similar objects are close in vector space. They are useful because raw categorical data like user IDs or words cannot be fed to neural networks directly, and one-hot encoding is high-dimensional and sparse. Embeddings compress that into a learned representation where semantic similarity is encoded as geometric proximity — king - man + woman ≈ queen in word2vec. In RAG systems, embeddings enable semantic search: convert documents and queries to vectors, find closest vectors via cosine similarity, retrieve relevant context."
+
+---
+
+**Q: What is attention mechanism and why did it replace RNNs?**
+
+> "Attention allows every position in a sequence to directly attend to every other position with a learned weight — the weight represents how relevant that position is to the current one. This solves the core RNN problem: RNNs process sequences step by step and compress all past context into a fixed hidden state, which loses information over long sequences — the vanishing gradient problem means early tokens barely influence the final state. Attention has direct connections between all pairs of tokens so gradients flow directly regardless of sequence length. Transformers stack attention layers and process all positions in parallel — faster training on GPUs and better long-range dependencies than any RNN."
+
+---
+
+**Q: Explain the transformer architecture.**
+
+> "The transformer consists of an encoder and decoder, each made of stacked identical layers. Each layer has two sub-components: multi-head self-attention which lets every token attend to every other token with multiple learned attention patterns in parallel, and a position-wise feedforward network applied independently to each token. Layer normalisation and residual connections wrap each sub-component for stable training. Since attention has no inherent position sense, positional encodings are added to token embeddings. The encoder processes the input sequence into contextual representations. The decoder generates the output sequence autoregressively, attending to both its own previous outputs and the encoder output via cross-attention."
+
+---
+
+**Q: What is RAG and why is it better than fine-tuning for knowledge?**
+
+> "RAG — Retrieval Augmented Generation — combines a retrieval system with a generative model. At query time, the user question is embedded, semantically similar documents are retrieved from a vector store, and those documents are injected into the LLM context as grounding before generation. RAG is better than fine-tuning for knowledge because fine-tuning bakes knowledge into weights — it is expensive to update, cannot cite sources, and hallucinates confidently on out-of-distribution questions. RAG keeps knowledge external and updatable — add new documents to the vector store without retraining, retrieve verifiable sources, and reduce hallucination by grounding generation in retrieved facts."
+
+---
+
+**Q: What is hallucination in LLMs and how do you reduce it?**
+
+> "Hallucination is when an LLM generates confident, fluent, factually incorrect output — it fills gaps in its knowledge with plausible-sounding fabrications because it is trained to predict the next token, not to verify truth. Reduction strategies: RAG grounds generation in retrieved facts so the model has a source to reference rather than relying on parametric memory; prompt engineering with explicit instructions like 'only answer from the provided context, say I don't know if unsure'; output verification by running generated claims through a fact-checking model; temperature reduction makes the model more conservative; and fine-tuning with RLHF trains the model to prefer accurate over confident responses."
+
+---
+
+**Q: What is fine-tuning and when should you use it?**
+
+> "Fine-tuning continues training a pretrained model on domain-specific data to adapt its weights to a new task or domain. Use it when the base model lacks domain vocabulary or style — medical, legal, financial text — or when you need a specific output format consistently, or when RAG is insufficient because the task requires reasoning patterns not just knowledge retrieval. LoRA (Low-Rank Adaptation) is the practical approach — instead of updating all parameters, it trains small low-rank adapter matrices injected into attention layers, reducing trainable parameters by 99% while achieving similar results. Fine-tuning is expensive and freezes knowledge at training time — prefer RAG for factual knowledge, fine-tuning for behaviour and style."
+
+---
+
+**Q: Explain the difference between parameters and hyperparameters.**
+
+> "Parameters are learned from data during training — weights and biases in a neural network, split thresholds in a decision tree. The model optimises them via gradient descent. Hyperparameters are set before training and control the learning process — learning rate, number of layers, dropout rate, batch size, number of trees, regularisation strength. They are not learned from data, they are tuned via cross-validation, grid search, random search, or Bayesian optimisation. The distinction matters in interviews: when someone asks how you trained a model, parameters are what changed; when they ask how you tuned it, hyperparameters are what you searched over."
+
+---
+
+**Q: What is transfer learning?**
+
+> "Transfer learning reuses a model trained on one large task as the starting point for a related smaller task — instead of training from random weights. The pretrained model has already learned general useful representations: edges and textures for vision models, grammar and semantics for language models. You then either fine-tune the whole model on your task data, or freeze early layers and only train the final layers. Transfer learning is powerful because labelled data for specific tasks is scarce and expensive, but large pretrained models trained on internet-scale data encode broad knowledge that transfers. BERT, GPT, and ResNet are all used as transfer learning starting points."
+
+---
+
+**Q: What is the difference between generative and discriminative models?**
+
+> "Discriminative models learn the boundary between classes — P(y|x), the probability of label given input. They answer 'given this input, which class?' Examples: logistic regression, SVM, neural classifiers. Generative models learn the full data distribution — P(x,y) or P(x) — and can both classify and generate new samples. Examples: GANs, VAEs, diffusion models, LLMs. Discriminative models are typically more accurate for classification because they focus entirely on the decision boundary. Generative models are more powerful when you need to synthesise data, do anomaly detection by modelling what normal looks like, or handle missing data by sampling from the learned distribution."
