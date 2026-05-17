@@ -56,18 +56,28 @@ Solutions are pruning, setting max depth, minimum samples per leaf, or replacing
 **Q: Random Forest vs Gradient Boosting — when to use which?**
 > "Random Forest builds many trees in parallel on random subsets of data and features, then averages predictions — it reduces variance and is robust to outliers, fast to train, and hard to overfit. Gradient Boosting builds trees sequentially where each tree corrects errors of the previous one — it reduces bias and achieves higher accuracy but is slower, sensitive to outliers, and easier to overfit. Use Random Forest when you need robustness and speed, use Gradient Boosting (XGBoost, LightGBM) when you need maximum accuracy on tabular data and have time to tune hyperparameters."
 
+Decision Tree
+     │
+     │ problem: high variance (overfits)
+     ▼
+Bagging ──────────────────── fix: train many trees on different data, average
+     │
+     │ problem: trees are correlated (too similar)
+     ▼
+Random Forest ─────────────── fix: also randomise which features each split sees
+     │
+     │ different branch — different problem to solve
+     │ problem: what if the model is systematically wrong (high bias)?
+     ▼
+Gradient Boosting ─────────── fix: sequential correction — each tree fixes errors
 
 **Q: How does XGBoost work?**
 
 > "XGBoost is gradient boosting with engineering improvements. Each iteration fits a new tree to the negative gradient of the loss function — the residual errors of the current ensemble. XGBoost adds L1 and L2 regularisation directly into the objective, uses second-order Taylor expansion for more accurate gradient estimates, handles missing values natively via learned default directions, and uses column and row subsampling like Random Forest to reduce variance. It also uses a histogram-based split finding algorithm that makes it much faster than naive gradient boosting."
 
----
-
 **Q: What is the curse of dimensionality?**
 
 > "As the number of features grows, the volume of the space grows exponentially and data becomes sparse. In high dimensions, all points become roughly equidistant from each other — which breaks distance-based algorithms like KNN and clustering since nearest neighbour loses meaning. Models need exponentially more data to maintain the same statistical power. Solutions are dimensionality reduction (PCA, UMAP, autoencoders), feature selection (L1 regularisation), and domain-specific feature engineering to remove irrelevant dimensions."
-
----
 
 **Q: Explain PCA — how it works and when to use it.**
 
