@@ -1,0 +1,302 @@
+# Principal Software Engineer — Informatica
+## Strong Algorithms, Data & AI Foundation (20 Questions)
+
+---
+
+## Q1. How would you design an efficient algorithm to detect duplicate records across a 500-million-row dataset in Informatica's MDM context?
+
+**Why interviewers ask it:** Duplicate detection (entity resolution) is Informatica's core MDM problem. This tests algorithmic depth — can you go beyond naive O(n²) comparison?
+
+**What a strong answer looks like:** Covers blocking/indexing to reduce candidate pairs, similarity algorithms (edit distance, Jaccard, Soundex), probabilistic classification of matches, and scalable implementation (Spark, candidate graph).
+
+**Sample answer:** Naive pairwise comparison is O(n²) — infeasible at 500M rows. I'd apply a two-stage approach: **Blocking** — hash-based or LSH (Locality-Sensitive Hashing) to generate candidate pairs that share at least one blocking key (e.g., first 3 chars of last name + zip code). This reduces comparisons from 500M² to millions. **Matching** — score each candidate pair using a weighted composite: Jaro-Winkler for name fields (handles typos better than Levenshtein for short strings), token-set ratio for address, and exact match for SSN/email. Pairs above a configurable threshold are classified as matches using a trained binary classifier (logistic regression on labeled pairs). At Informatica scale, the blocking + Spark-parallel comparison pipeline processes 500M records in under 2 hours. The blocking strategy is the critical design decision — wrong blocking keys cause false negatives that no matching algorithm can recover.
+
+**Red flags to avoid:**
+- Proposing O(n²) pairwise comparison without blocking
+- Using only exact matching (misses spelling variations, formatting differences)
+- Not knowing Jaro-Winkler or similar string similarity algorithms for fuzzy matching
+
+---
+
+## Q2. Explain how a hash join works and compare it to sort-merge join. When does Informatica's engine prefer each?
+
+**Why interviewers ask it:** Join algorithm selection is fundamental to ETL/data integration performance. Informatica's PowerCenter and IDMC execute billions of join operations — the engine must choose optimally.
+
+**What a strong answer looks like:** Explains build/probe phases of hash join, sort requirements of sort-merge join, complexity analysis, and the conditions that favor each (dataset sizes, sort availability, memory constraints).
+
+**Sample answer:** **Hash join:** Build phase — scan the smaller relation and build an in-memory hash table keyed on the join column. Probe phase — scan the larger relation, hash each row's join key, and look up matches. Complexity: O(n + m) with O(min(n,m)) memory. Best when one relation fits in memory. **Sort-merge join:** Sort both relations on the join key (O(n log n)), then merge in a single O(n + m) pass. Requires no in-memory hash table — I/O-efficient when both relations are pre-sorted (e.g., from a previous sort operation or index scan). Informatica's engine prefers hash join when: the smaller input fits in the hash memory buffer, no sort order exists on either input, and equi-join conditions hold. It prefers sort-merge when: inputs are already sorted (avoids the sort cost), join columns have many duplicates (hash collisions degrade hash join), or available memory is below the hash buffer threshold. In Informatica's Mapping Optimizer, I'd also consider the spill-to-disk behavior — hash join degrades gracefully when it spills (grace hash join), while sort-merge is more predictable under memory pressure.
+
+**Red flags to avoid:**
+- Saying hash join is always faster (incorrect when memory is constrained)
+- Not knowing the build vs. probe phase distinction
+- Missing the sort-already-available optimization for sort-merge
+
+---
+
+## Q3. What is the time and space complexity of common graph algorithms and where do they appear in Informatica's data lineage use case?
+
+**Why interviewers ask it:** Informatica's Axon and IDMC track data lineage as a directed acyclic graph (DAG). PMTS candidates must understand graph algorithm performance.
+
+**What a strong answer looks like:** Covers BFS/DFS (O(V+E)), Dijkstra (O((V+E)logV)), topological sort (O(V+E)), cycle detection, and maps each to real lineage operations.
+
+**Sample answer:** Data lineage is a DAG where nodes are datasets/transformations and edges are data flows. Key operations: **Lineage traversal (upstream/downstream impact):** BFS/DFS — O(V+E) where V=assets, E=connections. For Informatica's 10M-asset catalogs, this is fast (seconds) even without caching. **Topological sort for pipeline execution order:** O(V+E) — used to determine ETL job execution sequence respecting dependencies. **Cycle detection:** DFS with a recursion stack — O(V+E) — catches circular dependencies before they deadlock a pipeline. **Shortest path for impact analysis ("if I change this field, what's the minimum blast radius?"):** Dijkstra with edge weights representing transformation complexity — O((V+E)logV). The practical challenge at Informatica scale isn't algorithm complexity (graphs are sparse) — it's graph storage (Neo4j vs. in-memory adjacency list) and incremental update efficiency when lineage changes due to pipeline modifications. I'd maintain an incremental adjacency list updated on each catalog event, with BFS results cached and invalidated on graph mutations.
+
+**Red flags to avoid:**
+- Not knowing that lineage is a DAG problem
+- Confusing BFS and DFS use cases
+- Missing cycle detection as a critical safety check for pipeline scheduling
+
+---
+
+## Q4. Describe how you would implement an efficient trie-based autocomplete for Informatica's catalog search over 50 million asset names.
+
+**Why interviewers ask it:** Informatica IDMC's catalog search requires sub-100ms prefix lookup at scale. Trie design tests data structure depth.
+
+**What a strong answer looks like:** Explains trie node structure, compressed trie (Patricia tree) for memory efficiency, ranking by frequency, and practical production choices (in-memory vs. Redis sorted sets for distributed deployment).
+
+**Sample answer:** A standard trie stores each character as a node — 50M asset names with avg 30 chars = up to 1.5B nodes, prohibitive. I'd use a **compressed DAWG (Directed Acyclic Word Graph)** — shares suffix structures, reducing memory by 60–80% vs. plain trie. Each terminal node stores a rank (search frequency, recency, asset type relevance). **Lookup:** traverse the compressed trie on each keystroke (debounced 150ms), returning top-10 ranked completions in O(P + K) where P=prefix length, K=candidates returned. For 50M assets in a distributed system, I'd store the full compressed trie in a Redis Sorted Set per prefix (precomputed for all prefixes ≤ 5 chars, hot-path cached). Prefixes > 5 chars have much lower candidate counts and are computed on-demand from the trie. Memory: compressed DAWG for 50M asset names fits in ~4GB RAM — feasible for a dedicated search service. The top-K extraction uses a min-heap of size K, giving O(n log K) per prefix traversal.
+
+**Red flags to avoid:**
+- Standard (uncompressed) trie for 50M strings (memory infeasible)
+- No ranking — returning alphabetical completions rather than relevance-ranked
+- Not discussing distributed deployment (single machine trie doesn't scale horizontally)
+
+---
+
+## Q5. What is the sliding window algorithm and how would you use it to detect anomalies in Informatica's real-time data quality monitoring?
+
+**Why interviewers ask it:** Streaming data quality monitoring requires efficient windowed statistics — a core Informatica Cloud use case.
+
+**What a strong answer looks like:** Explains fixed vs. sliding windows, incremental statistic computation (O(1) update vs. O(n) recompute), Z-score and IQR-based anomaly detection, and stream processing integration.
+
+**Sample answer:** A sliding window of size W maintains a rolling view of the last W data points. Naively recomputing statistics on each slide is O(W); incrementally it's O(1) using **Welford's online algorithm** for running mean and variance: on each new value, update mean and M2 (sum of squared deviations) in one pass — no storage of the full window needed. For Informatica's real-time data quality: **Null rate anomaly** — sliding window count of nulls; alert when the null rate exceeds baseline mean + 3σ (Z-score > 3). **Value distribution shift** — sliding window histogram with chi-squared test vs. baseline distribution; alert on significant divergence. **Volume anomaly** — sliding window record count; alert when count deviates > 2σ from same-hour baseline. Integration: implement as a Flink stateful operator with a tumbling window for baseline statistics (daily) and a sliding window (5-minute slide, 1-hour window) for real-time monitoring. This gives sub-minute detection latency for data quality regressions in production Informatica pipelines.
+
+**Red flags to avoid:**
+- Recomputing statistics from scratch on every window slide (O(W) instead of O(1))
+- Not distinguishing fixed window from sliding window
+- No baseline comparison (just detecting high absolute values, not relative anomalies)
+
+---
+
+## Q6. How does consistent hashing work and how would you apply it to shard Informatica's metadata catalog across a distributed cluster?
+
+**Why interviewers ask it:** Informatica's catalog stores billions of metadata objects — sharding strategy determines scalability and rebalancing cost.
+
+**What a strong answer looks like:** Explains the hash ring, virtual nodes for load balancing, minimal key movement on rebalancing, and applies it to catalog sharding with hotspot considerations.
+
+**Sample answer:** Consistent hashing maps both keys and nodes onto a circular hash ring [0, 2³²). Each key is assigned to the first node clockwise from its hash position. **Virtual nodes:** each physical node is assigned multiple (150–300) positions on the ring, ensuring even distribution even if node hashes cluster naturally. **Rebalancing:** adding/removing a node only reassigns keys in the adjacent arc — O(K/N) keys moved vs. O(K) for modular hashing. For Informatica's catalog sharding: shard key = hash(asset_id). This distributes metadata objects evenly. However, **hotspot risk:** popular datasets (widely used reference data) will be heavily read regardless of sharding. I'd combine consistent hashing for primary sharding with a read replica layer (each shard has 3 read replicas) for hot key relief. For lineage edges (which span assets on different shards), I'd store them in a separate graph-optimized tier (Apache Atlas / JanusGraph) rather than forcing cross-shard lookups on every lineage traversal.
+
+**Red flags to avoid:**
+- Not explaining virtual nodes (why consistent hashing is better than modular in practice)
+- Ignoring hotspot mitigation for popular assets
+- Proposing separate database per shard (operational nightmare at scale)
+
+---
+
+## Q7. Explain dynamic programming with a concrete example. How would you use DP in Informatica's schema matching or data transformation optimization?
+
+**Why interviewers ask it:** DP is a foundational algorithm paradigm; Informatica's schema mapping and query optimization use DP-based approaches.
+
+**What a strong answer looks like:** Defines DP (optimal substructure + overlapping subproblems), gives a concrete example (edit distance), and applies it to schema matching or join order optimization.
+
+**Sample answer:** Dynamic programming solves problems by breaking them into overlapping subproblems and caching solutions. **Classic example — Edit Distance:** `dp[i][j]` = minimum edits to convert string A[0..i] to B[0..j]. Recurrence: if A[i]==B[j], `dp[i][j] = dp[i-1][j-1]`; else `min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+1)`. O(nm) time and space. **Informatica schema matching application:** Given source schema S (n fields) and target schema T (m fields), compute a similarity matrix using edit distance (for field name fuzzy matching) + type compatibility score. DP then finds the optimal 1:1 field mapping that maximizes total similarity — equivalent to the Assignment Problem, solved in O(n³) via the Hungarian algorithm or via DP on a bitmask (feasible for n ≤ 20). **Join order optimization in Informatica's query engine:** DP over subsets of relations finds the optimal join tree (System R's approach). For n relations, DP evaluates 2ⁿ subsets to find the lowest-cost join ordering — the Informatica query optimizer uses this exact approach with a cost model based on estimated cardinality.
+
+**Red flags to avoid:**
+- Defining DP without demonstrating the recurrence formulation
+- Not connecting to a real Informatica use case
+- Not knowing that join order optimization is a classic DP application
+
+---
+
+## Q8. What is the difference between a B-tree and an LSM tree? Which would you recommend for Informatica's metadata store and why?
+
+**Why interviewers ask it:** Storage engine selection fundamentally affects read/write performance for Informatica's high-write metadata and catalog workloads.
+
+**What a strong answer looks like:** Explains B-tree's balanced page structure (read-optimal), LSM's write-optimized buffered compaction model, and connects to read vs. write amplification tradeoffs for the specific workload.
+
+**Sample answer:** **B-tree:** Data stored in sorted, balanced pages. Reads: O(log n) with small constant (page cache friendly). Writes: random I/O to update in-place pages — write amplification ~1 page per write. Reads are fast; random writes create I/O bottleneck under heavy write load. **LSM tree (Log-Structured Merge):** Writes go to an in-memory MemTable (sorted), flushed to immutable SSTables on disk. Reads merge multiple SSTable levels — more I/O per read but writes are sequential (fast) and batch-compacted. Write amplification is higher (data is rewritten during compaction); read amplification is managed with Bloom filters. **Recommendation for Informatica metadata store:** Depends on the workload split. For the **catalog metadata store** (heavy writes from pipeline executions, schema changes, lineage events — moderate reads), LSM (RocksDB/Cassandra) is preferable — the write-heavy workload aligns with LSM's strength. For the **configuration/reference data store** (mostly read, rarely written, needs range queries), B-tree (PostgreSQL) is preferable. I'd use a dual-store architecture: RocksDB for event-driven lineage writes, PostgreSQL for configuration and complex range queries on metadata.
+
+**Red flags to avoid:**
+- Recommending one universally without considering workload characteristics
+- Not knowing the read amplification problem in LSM (needing Bloom filters to mitigate)
+- Confusing write-ahead log (WAL) with LSM tree
+
+---
+
+## Q9. How does Informatica's data masking work algorithmically? What are the tradeoffs between different masking techniques?
+
+**Why interviewers ask it:** Data masking is a core Informatica security feature — algorithmic understanding differentiates a PMTS from a user.
+
+**What a strong answer looks like:** Covers deterministic vs. random masking, format-preserving encryption (FPE), tokenization, and the referential integrity challenge when masking relational data.
+
+**Sample answer:** Informatica Persistent Data Masking offers several techniques: **Substitution:** replace value with a random value from a lookup dictionary (e.g., real names → fake names from a name library). Simple but breaks referential integrity if the same source value maps to different substitutions across tables. **Deterministic masking (hashing):** H(value + secret_salt) — same input always produces the same masked output, preserving referential integrity across tables. Risk: vulnerable to rainbow table attacks if the value space is small (e.g., SSNs). **Format-Preserving Encryption (FPE, AES-FF3):** encrypts a value to a ciphertext with the same format and domain (a 9-digit SSN stays a 9-digit number). Preserves referential integrity, format-valid for downstream systems, and is reversible with the key. Gold standard for regulated industries. **Tokenization:** replace the value with a random token from a secure vault that stores the mapping. Decryption requires vault access — stronger isolation than FPE but vault is a single point of failure. **Tradeoff:** referential integrity vs. security strength vs. reversibility. For Informatica test data environments, I recommend FPE for FK-linked fields and substitution for non-linked descriptive fields.
+
+**Red flags to avoid:**
+- Not knowing the referential integrity problem with random masking
+- Treating hashing alone as sufficient masking (vulnerable to brute-force on small domains)
+- Not knowing Format-Preserving Encryption as the production standard
+
+---
+
+## Q10. Explain the MapReduce paradigm. How does Informatica leverage it for large-scale data transformations, and what are its limitations?
+
+**Why interviewers ask it:** MapReduce underpins big data processing; Informatica's Big Data Management and cloud ETL use Spark (a MapReduce successor).
+
+**What a strong answer looks like:** Explains the Map, Shuffle, Reduce phases with data flow, connects to Informatica's execution model, and articulates the limitations that drove the Spark transition.
+
+**Sample answer:** **MapReduce phases:** Map — apply a function to each input record, emitting (key, value) pairs. Shuffle — distributed sort and group by key (most expensive phase — network + disk I/O). Reduce — aggregate values per key to produce final output. For an Informatica aggregation (GROUP BY account_id, SUM(revenue)): Map emits (account_id, revenue); Shuffle groups by account_id; Reduce sums revenues per account. **Limitations:** 1) Multi-stage pipelines (complex ETL) require multiple MapReduce jobs, each writing intermediate results to HDFS — massive I/O amplification. 2) No native support for iteration (required for ML training, graph algorithms) — each iteration is a separate job. 3) No streaming support. **Spark solves these:** RDD/DataFrame in-memory processing, lazy DAG optimization, single-pass multi-transformation pipelines. Informatica's IDMC uses Spark as the execution engine for cloud-scale transformations — each Informatica mapping is compiled to a Spark DAG, with the Mapping Optimizer applying predicate pushdown, column pruning, and join reordering before submission. The remaining MapReduce (Hive) use case is batch aggregations on very large datasets where Spark's in-memory model would exceed cluster memory.
+
+**Red flags to avoid:**
+- Not explaining the Shuffle phase as the bottleneck
+- Claiming MapReduce and Spark are equivalent
+- Not knowing that Informatica uses Spark as its execution engine
+
+---
+
+## Q11. What is a Bloom filter and how would you use it in Informatica's data quality or pipeline optimization?
+
+**Why interviewers ask it:** Bloom filters are a powerful probabilistic data structure used in large-scale data systems — tests data structure breadth.
+
+**What a strong answer looks like:** Explains the bit array + multiple hash functions mechanism, false positive probability, no false negatives property, and gives a concrete Informatica use case.
+
+**Sample answer:** A Bloom filter is a bit array of m bits and k independent hash functions. **Insert:** hash the item with all k functions; set the corresponding m bits to 1. **Lookup:** hash with all k functions; if any bit is 0, the item is definitely absent (no false negatives). If all bits are 1, the item is probably present (false positive possible, rate ≈ (1 - e^(-kn/m))^k). **Informatica use cases:** 1) **Duplicate detection pre-filter:** Before expensive fuzzy matching, check a Bloom filter of already-processed record keys. Records with definite Bloom misses are new — skip the costly similarity check. Reduces matching workload by 40–60% in typical MDM pipelines. 2) **Data quality — referential integrity check at scale:** Checking if a foreign key exists in a 500M-row parent table without loading the full table. Build a Bloom filter of parent keys (2GB filter for 500M 64-bit keys at 1% FP rate); check each child record's FK in O(k) time. False positives mean rare missed violations — acceptable for a first-pass filter before exact validation. 3) **LSM-tree read optimization (used internally in RocksDB):** Each SSTable has a Bloom filter; reads check the filter before scanning the SSTable, reducing read amplification.
+
+**Red flags to avoid:**
+- Confusing false positives with false negatives (Bloom filters NEVER have false negatives)
+- Not knowing the false positive rate formula
+- Only describing the theory without an Informatica-relevant application
+
+---
+
+## Q12. How does gradient boosting work algorithmically? How would you use it in Informatica's data quality scoring or MDM match scoring?
+
+**Why interviewers ask it:** Gradient boosting is the go-to algorithm for structured/tabular data problems like MDM match scoring — PMTS must understand it at an algorithmic level.
+
+**What a strong answer looks like:** Explains the sequential residual-fitting approach, the role of learning rate, regularization via tree depth and shrinkage, and maps to a concrete Informatica scoring use case.
+
+**Sample answer:** Gradient boosting builds an ensemble additively: each new tree fits the **pseudo-residuals** (negative gradient of the loss) of the current ensemble's predictions. For MSE loss, residuals are simply (y - ŷ); for log-loss (binary classification), residuals are (y - sigmoid(ŷ)). Adding each tree with learning rate η (shrinkage) prevents overfitting: F_m(x) = F_{m-1}(x) + η·h_m(x). The learning rate trades off number of trees (more iterations needed) against overfitting (higher η overfits faster). **Informatica MDM match scoring application:** Given candidate pairs (entity A, entity B) with features [name_similarity, address_similarity, dob_match, phone_match, email_match], train an XGBoost classifier on human-labeled pairs. Output: probability score 0–1 that the pair is a true match. XGBoost adds L1/L2 regularization on leaf weights and tree structure, plus column and row subsampling — outperforms logistic regression on this tabular task because it captures non-linear interactions (e.g., name similarity matters more when address is also similar). For Informatica's match scoring, I'd use XGBoost with calibrated probability outputs (Platt scaling) so the 0.85 confidence score truly means 85% precision at that threshold.
+
+**Red flags to avoid:**
+- Confusing gradient boosting with random forests (they're both ensembles but fundamentally different — RF is parallel bagging; GB is sequential residual fitting)
+- Not explaining the residual-fitting concept
+- No calibration discussion for probability output
+
+---
+
+## Q13. What is a skip list and how does it compare to a balanced BST? Where is it used in data-intensive systems?
+
+**Why interviewers ask it:** Skip lists appear in Redis (sorted sets), LevelDB/RocksDB (MemTable), and Cassandra's memtable — all used in Informatica's infrastructure stack.
+
+**What a strong answer looks like:** Explains the probabilistic multi-level linked list structure, O(log n) expected search/insert, and contrasts with AVL/Red-Black trees on implementation complexity and cache behavior.
+
+**Sample answer:** A skip list is a probabilistic data structure — a sorted linked list augmented with multiple levels of "express lanes." Each element is promoted to a higher level with probability p (typically 0.5). **Search:** start at the highest level, traverse right until the next element exceeds the target, drop down a level, repeat — O(log n) expected. **Insert:** search for position, flip coins to determine height, update pointers at each level — O(log n) expected. **vs. Balanced BST (Red-Black tree):** Red-Black tree guarantees O(log n) worst case; skip list gives O(log n) expected (rarely degrades in practice). Red-Black tree is cache-unfriendly (pointer-chasing in random memory); skip list's sorted structure has better sequential access patterns. Skip list is significantly simpler to implement correctly than Red-Black tree. **Informatica infrastructure relevance:** RocksDB (used as Informatica's metadata store backend) uses a skip list for its MemTable — the in-memory sorted buffer for recent writes before SSTable flush. Redis sorted sets use skip lists for O(log n) rank operations and O(log n) range queries. When I've tuned Informatica's catalog persistence layer backed by RocksDB, understanding the skip list MemTable flush behavior was critical for write throughput optimization.
+
+**Red flags to avoid:**
+- Treating skip list as just an academic curiosity (it's in production systems they use)
+- Not understanding the probabilistic promotion mechanism
+- Claiming Red-Black tree is always superior
+
+---
+
+## Q14. How does Informatica's Intelligent Data Management Cloud (IDMC) use AI/ML for automated data discovery and classification?
+
+**Why interviewers ask it:** Informatica's CLAIRE AI engine is its differentiator; PMTS must understand the ML architecture behind automated catalog features.
+
+**What a strong answer looks like:** Covers NLP-based column name classification, sample value analysis, similarity to known patterns, CLAIRE's recommendation engine, and the feedback loop for continuous improvement.
+
+**Sample answer:** Informatica CLAIRE (CLoud AI and Real-time Engine) automates three catalog tasks using ML: **1) Data classification:** A multi-class classifier (fine-tuned transformer + rule ensemble) predicts data domain (PII, financial, healthcare) from: column name (semantic embedding), sample values (statistical distribution + regex pattern matching), table context (sibling column names). For PII detection: name columns are identified by column name similarity to known PII fields AND sample value matching against PII patterns (SSN regex, email regex, credit card Luhn check). **2) Schema inference and similarity:** Embedding-based schema matching uses a Siamese network trained on known-equivalent schema pairs — similarity score between source and target schemas enables auto-mapping recommendations. **3) Business term recommendation:** Latent Dirichlet Allocation or transformer-based topic modeling maps technical column names to business glossary terms. The CLAIRE feedback loop: data stewards accepting or rejecting recommendations are labeled training data — CLAIRE retrains weekly from the accumulated corrections. This active learning loop is why CLAIRE's accuracy improves with org-specific usage. At a PMTS level, I'd design the training pipeline to weight recent feedback more heavily (concept drift in data schemas is real) and monitor per-classification-category accuracy, not just aggregate accuracy.
+
+**Red flags to avoid:**
+- Describing CLAIRE as purely rule-based (it's ML-driven)
+- Not knowing the feedback loop as the key to improvement over time
+- Missing sample value analysis as a classification signal (column name alone is insufficient)
+
+---
+
+## Q15. Explain how you would implement a highly efficient ETL pipeline for real-time data using an event-driven architecture at Informatica.
+
+**Why interviewers ask it:** Real-time ETL is Informatica's key cloud growth area — tests streaming architecture and integration with Informatica's tooling.
+
+**What a strong answer looks like:** Covers CDC as the source, Kafka for decoupling, Informatica's real-time mapping for transformation, sink considerations, and exactly-once semantics.
+
+**Sample answer:** Real-time ETL pipeline design: **Source layer:** Change Data Capture (Informatica CDC or Debezium) reads database WAL/redo logs and publishes row-level change events to Kafka topics (one topic per source table, key=primary key for compaction). **Transport:** Kafka with log compaction for stateful CDC topics — consumers can replay from any offset. **Transformation:** Informatica IDMC's real-time mappings consume from Kafka, apply transformations (lookup enrichment from cached dimension tables, expression transforms, aggregations via stateful Flink-backed operators), and write to target. The transformation execution uses micro-batch processing (configurable flush interval: 100ms–5s) to balance latency vs. throughput. **Exactly-once semantics:** Kafka transactions (idempotent producer + transactional consumer) + Informatica's offset commit-after-write pattern ensures each record is processed once. **Sink:** Target writes to data warehouse (Snowflake) via streaming inserts with upsert semantics (MERGE on primary key) to handle CDC update/delete events correctly. **Error handling:** Dead-letter topic for unparseable records; exactly-once poison pill detection with automatic routing to DLQ + alert. Schema evolution: Confluent Schema Registry enforces backward compatibility on Kafka topics — source schema changes that break compatibility block the pipeline and alert before corrupting the target.
+
+**Red flags to avoid:**
+- Polling-based ingestion (not real-time, high latency, source load)
+- At-least-once without deduplication at the target (duplicates in the data warehouse)
+- No schema evolution handling (common failure mode in long-running pipelines)
+
+---
+
+## Q16. What is vector similarity search and how does it power Informatica's AI-driven catalog search and data discovery?
+
+**Why interviewers ask it:** Vector embeddings are the foundation of semantic search — increasingly central to Informatica's CLAIRE and catalog search capabilities.
+
+**What a strong answer looks like:** Explains dense embeddings for semantic representation, ANN algorithms (HNSW, IVF), hybrid retrieval, and the Informatica catalog application.
+
+**Sample answer:** Vector similarity search finds the k nearest neighbors to a query vector in a high-dimensional embedding space. **Embedding generation:** A fine-tuned sentence encoder (e.g., domain-adapted SBERT on data catalog descriptions) maps each asset description, column name, and business term into a 768-dimensional dense vector — semantically similar assets are close in vector space. **ANN indexing:** Exact nearest-neighbor search is O(n·d) per query — infeasible at catalog scale. HNSW (Hierarchical Navigable Small World) builds a multi-layer proximity graph; queries traverse from coarse to fine layers in O(log n) with tunable recall-speed tradeoff. **Informatica application:** User types "customer revenue last quarter" — the query is encoded into a vector; HNSW returns the 50 most semantically similar catalog assets (even if they don't share exact keywords). **Hybrid retrieval:** Combine HNSW dense search (semantic similarity) with BM25 lexical search (keyword exact match) via Reciprocal Rank Fusion — improves recall for both semantic queries and exact technical name matches. **Active learning:** user click-through on search results provides implicit feedback; clicked assets get their embedding centroids used to fine-tune the encoder quarterly. At Informatica scale (50M assets, 768-dim), the full HNSW index fits in ~150GB RAM — deployed as a dedicated search cluster behind the catalog API.
+
+**Red flags to avoid:**
+- Treating semantic search as the same as keyword search
+- Not knowing HNSW or IVF as the production ANN algorithms
+- Missing hybrid retrieval (dense-only fails for exact technical name lookups)
+
+---
+
+## Q17. How would you approach optimizing a slow-running Informatica mapping that processes 1 billion rows daily? Walk through your methodology.
+
+**Why interviewers ask it:** Performance optimization of Informatica mappings is a real-world PMTS responsibility — tests systematic, data-driven approach vs. guesswork.
+
+**What a strong answer looks like:** Systematic approach: profile first, identify bottleneck, apply targeted optimization. Covers partition strategy, pushdown optimization, cache strategies, and pipeline parallelism.
+
+**Sample answer:** **Step 1 — Profile:** Examine Informatica's session log for transformation-level row counts and elapsed time. Identify the transformation with the highest time delta — that's the bottleneck, not necessarily the most complex transformation. **Step 2 — Classify the bottleneck:** Is it I/O (source/target read-write), CPU (complex expressions, aggregations), or network (lookups to remote databases)? **Step 3 — Apply targeted fixes:** **Partition tuning:** if the bottleneck is a single-partition bottleneck, increase DTM buffer size and add pipeline partitioning (hash partition on the high-cardinality key, e.g., customer_id). **Pushdown optimization:** enable Informatica's SQL pushdown — push Joiner, Filter, and Aggregator transformations to the source database as SQL; let the database execute them rather than pulling all rows to the DTM. At 1B rows, pushing a filter that reduces to 50M rows before the mapping processes them is a 20x speedup. **Lookup caching:** replace uncached lookups (1 DB query per row = 1B queries) with fully cached lookups (1 query to load cache at startup). **Sorter optimization:** increase sorter cache; if the sort overflows to disk, performance degrades 5–10x. **Step 4 — Validate:** rerun with session statistics, compare before/after row processing rates. For a 1B-row mapping I optimized at a previous engagement, combining pushdown + partitioning reduced runtime from 8 hours to 55 minutes.
+
+**Red flags to avoid:**
+- Optimizing without profiling first (random optimization)
+- Not knowing Informatica's pushdown optimization feature
+- Treating all bottlenecks identically (I/O, CPU, and network have different fixes)
+
+---
+
+## Q18. Explain the concept of data lineage graph algorithms. How would you compute the impact of changing a source field across 10,000 downstream assets?
+
+**Why interviewers ask it:** Impact analysis is Informatica's core catalog value proposition — the algorithm behind it must be both correct and scalable.
+
+**What a strong answer looks like:** Explains the lineage graph model (column-level lineage as a DAG), BFS/DFS traversal for impact analysis, memoization for repeated subgraph queries, and incremental updates for large catalogs.
+
+**Sample answer:** **Graph model:** Column-level lineage is a DAG where each node is a (asset, column) pair and directed edges represent data derivation (column A in table X feeds column B in transformation Y). A source field change can propagate to any downstream node reachable from it. **Naive impact analysis:** BFS from the changed source column node — visit all reachable downstream nodes in O(V+E). For a catalog with 10,000 affected assets and 100,000 lineage edges, BFS completes in milliseconds. **Practical challenge:** the lineage graph has 50M nodes and 500M edges — the BFS must be efficient. Optimization: 1) **Precomputed reachability index** — for frequently queried source assets, precompute and cache their downstream reachability sets. Invalidate on lineage graph mutations. 2) **Subgraph extraction** — rather than BFS over the full 50M-node graph, maintain an inverted index: for each source column, store the set of all reachable downstream columns (updated incrementally via topological order propagation). 3) **Column-level vs. table-level granularity** — if exact column-level lineage is unavailable, table-level BFS gives a superset of the true impact (conservative — no false negatives). **Result presentation:** categorize impacted assets by transformation distance (1-hop, 2-hop, N-hop) and by data product owner, enabling prioritized outreach.
+
+**Red flags to avoid:**
+- Not knowing BFS as the foundational lineage traversal algorithm
+- Table-level-only analysis when column-level is required for precise impact
+- No incremental update strategy (full BFS recomputation on every lineage change doesn't scale)
+
+---
+
+## Q19. What is the difference between L1 and L2 regularization in the context of Informatica's predictive data quality models? When would you choose each?
+
+**Why interviewers ask it:** Regularization knowledge is fundamental to building reliable ML models for data quality scoring — PMTS must understand it at both theoretical and practical levels.
+
+**What a strong answer looks like:** Derives both from the loss function, explains sparsity effect of L1, weight shrinkage of L2, connects to feature selection and the specific characteristics of data quality features.
+
+**Sample answer:** Both add a penalty to the loss function to prevent overfitting. **L1 (Lasso):** adds λΣ|wᵢ|. The L1 penalty has a geometric property — its constraint surface has corners at axes — that encourages weights to be exactly zero. L1 performs feature selection implicitly. **L2 (Ridge):** adds λΣwᵢ². The circular constraint surface shrinks all weights proportionally but rarely to zero. L2 is preferable when all features carry some signal. **For Informatica data quality models:** Data quality scoring features include column-level statistics (null rate, cardinality ratio, format compliance rate, distribution metrics) plus metadata features (column name, data type, table size). Many of these features are correlated (null rate and completeness score are nearly identical). L2 is preferable here — it handles correlated features by distributing weight across them, whereas L1 arbitrarily zeros out one of a correlated pair, discarding valid signal. However, if I have 500+ features and suspect many are irrelevant, L1 (or Elastic Net = L1+L2 combined) is preferable — it auto-selects the relevant features, producing a sparser, more interpretable model. In practice, I always try Elastic Net (α=0.5) as a starting point, then tune α based on the feature importance distribution.
+
+**Red flags to avoid:**
+- Saying "L2 is always better" or "L1 is always better"
+- Not explaining why L1 produces sparsity (the geometry of the constraint)
+- Not connecting to correlated features, which are common in data quality metrics
+
+---
+
+## Q20. Design an algorithm to automatically detect and suggest fixes for referential integrity violations at scale in Informatica's data quality platform.
+
+**Why interviewers ask it:** This is an end-to-end algorithmic design question combining data structures, statistics, and ML — synthesizes the candidate's full algorithmic toolkit in an Informatica-relevant context.
+
+**What a strong answer looks like:** Covers detection (efficient FK violation scan), categorization (missing parent, orphaned child, circular FK), ML-based fix suggestion, and the cost of different remediation options.
+
+**Sample answer:** **Detection algorithm:** Build a Bloom filter of all parent table primary keys (false positive rate 0.1%). For each child record, hash its FK value and check the Bloom filter. Bloom misses = definite violations. Bloom hits = probable valid (rare FP means occasional false OK — acceptable for a first-pass scan). Then perform exact verification only on the Bloom-hit subset that statistical sampling suggests might have issues (stratified sample, 1% of hits, extrapolate violation rate). This reduces exact verification from n child rows to ~1%, a 100x reduction in database round-trips. **Categorization:** Missing parent (child FK exists but parent PK does not) — most common, detected above. Orphaned parent (parent with no children, violates mandatory relationship) — BFS from orphaned parent nodes. Circular FK (A references B which references A) — DFS cycle detection on the FK graph. **Automated fix suggestions using ML:** Train a classifier on historical remediation actions: feature vector = (FK violation type, child table volume, parent table existence probability, field value characteristics). Output: ranked suggestions [SET NULL, DELETE orphan, INSERT missing parent with default values, ROUTE to data steward]. The fix confidence score gates automation — high confidence suggests are auto-applied in test environments; low confidence routes to human review. For a 1B-row dataset with 0.3% violation rate (3M violations), this pipeline identifies and categorizes all violations in under 30 minutes versus the 4+ hours of a naive scan.
+
+**Red flags to avoid:**
+- Full table scan without Bloom filter pre-filter (1B × 1B lookups)
+- No categorization of violation types (different violations need different fixes)
+- Proposing only automated fixes without a human review path for ambiguous cases
