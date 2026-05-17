@@ -44,7 +44,8 @@ so gradients can flow across hundreds of timesteps without shrinking.
 **Q: What is the bias-variance tradeoff?**
 > "Bias is error from wrong assumptions — a model too simple to capture the pattern, like fitting a straight line to curved data. 
 Variance is error from sensitivity to training data — a model so complex it memorises noise. High bias underfits, high variance overfits. 
-The total error is bias² + variance + irreducible noise. The goal is finding the sweet spot — complex enough to learn the pattern, simple enough to generalise. Regularisation, dropout, and ensemble methods all manage this tradeoff."
+The total error is bias² + variance + irreducible noise. 
+The goal is finding the sweet spot — complex enough to learn the pattern, simple enough to generalise. Regularisation, dropout, and ensemble methods all manage this tradeoff."
 
 **Q: Explain Decision Trees and their problems.**
 
@@ -70,6 +71,11 @@ Random Forest ─────────────── fix: also randomise 
      │ problem: what if the model is systematically wrong (high bias)?
      ▼
 Gradient Boosting ─────────── fix: sequential correction — each tree fixes errors
+Decision tree — one meteorologist who studies all the data and gives you a single forecast. Smart, but if they have a blind spot or a bad day, the whole prediction fails.
+Bagging — you ask 100 meteorologists, each given a slightly different historical dataset. You average their forecasts. No single blind spot dominates.
+Random forest — same 100 meteorologists, but each one is only allowed to look at a random subset of weather signals (temperature, humidity, pressure, wind — not all of them). This forces each meteorologist to develop different expertise. Their combined forecast is more diverse, so averaging it is more powerful.
+Gradient boosting — one meteorologist makes a forecast. A second meteorologist studies only where the first was wrong and corrects those specific mistakes. A third studies where the first two were still wrong. Each specialist focuses entirely on the remaining errors. After 100 rounds, the accumulated corrections are remarkably accurate — but if you let it run too long, the last few meteorologists start "correcting" random noise.
+
 
 **Q: How does XGBoost work?**
 
@@ -81,7 +87,11 @@ Gradient Boosting ─────────── fix: sequential correction �
 
 **Q: Explain PCA — how it works and when to use it.**
 
-> "PCA finds the directions of maximum variance in the data — the principal components — which are orthogonal eigenvectors of the covariance matrix. It projects data onto the top k components, reducing dimensions while preserving maximum variance. Use PCA when features are highly correlated, when you need to visualise high-dimensional data in 2D or 3D, or as a preprocessing step to remove noise and speed up downstream models. The limitation is it only captures linear relationships and the components are not interpretable — use UMAP or t-SNE for non-linear structure."
+> "PCA finds the directions of maximum variance in the data — the principal components — which are orthogonal eigenvectors of the covariance matrix.
+It projects data onto the top k components, reducing dimensions while preserving maximum variance. 
+Use PCA when features are highly correlated, when you need to visualise high-dimensional data in 2D or 3D, or as a preprocessing step to remove noise 
+and speed up downstream models. The limitation is it only captures linear relationships and the components are not interpretable — 
+use UMAP or t-SNE for non-linear structure."
 
 ---
 
