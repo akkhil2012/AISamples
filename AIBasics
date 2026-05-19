@@ -500,6 +500,15 @@ Scaling             → Stateless workers + queue-based concurrency
 Testing             → Evals + trace regression + chaos testing
 ```
 
-
+When to prefer distillation against quantization?
+Accuracy
+                       ▲
+                       │
+          Distillation │ (better accuracy at same size)
+                       │
+    ───────────────────┼──────────────────────►
+                       │                    Size ↓
+          Quantization │ (same accuracy, smaller footprint)
+                       │
 
 
