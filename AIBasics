@@ -230,3 +230,276 @@ use UMAP or t-SNE for non-linear structure."
 **Q: What is the difference between generative and discriminative models?**
 
 > "Discriminative models learn the boundary between classes — P(y|x), the probability of label given input. They answer 'given this input, which class?' Examples: logistic regression, SVM, neural classifiers. Generative models learn the full data distribution — P(x,y) or P(x) — and can both classify and generate new samples. Examples: GANs, VAEs, diffusion models, LLMs. Discriminative models are typically more accurate for classification because they focus entirely on the decision boundary. Generative models are more powerful when you need to synthesise data, do anomaly detection by modelling what normal looks like, or handle missing data by sampling from the learned distribution."
+
+
+
+What role does FNN plays in attension:
+Role of Feed-Forward Network (FFN) Layer in Attention (Transformer)
+In a Transformer, each layer has two main components: Multi-Head Attention + Feed-Forward Network (FFN). They serve very different purposes.
+
+What Attention Does vs. What FFN Does?
+Attention figures out which tokens to relate to each other — it's about routing and mixing information across positions.
+FFN then takes that mixed representation and processes it deeply at each position independently — it's about transforming and storing knowledge.
+Key Roles of the FFN Layer
+1. Non-linearity / Feature transformation
+Attention is mostly linear (weighted sums). FFN introduces the non-linearity needed to learn complex functions. Without it, stacking attention layers collapses to near-linear operations.
+2. Position-wise processing
+FFN operates on each token independently (no cross-token interaction). After attention has blended context across positions, FFN refines each token's representation on its own.
+
+
+What are the core components of a production agentic system architecture?
+User / Client
+     │
+     ▼
+Orchestration Layer       ← manages agent loop, state, retries
+     │
+     ├── LLM API          ← Claude, GPT-4, Gemini etc.
+     │
+     ├── Tool Registry    ← functions the agent can call
+     │
+     ├── Memory Store     ← short-term (context) + long-term (vector DB)
+     │
+     ├── State Store      ← tracks run state, intermediate results
+     │
+     └── Observability    ← traces, logs, evals
+
+What failure modes are unique to agentic systems and how do you handle them?
+
+How do you prevent an agent from causing irreversible damage in production?
+Tool-level guardrails: classify tools as read-only vs. write vs. destructive
+Confirmation gates: require explicit approval for destructive actions
+Sandbox environments: test tool calls in staging before production
+Rate limits on tools: cap how many emails/API calls an agent can make per run
+Audit trail: log every tool call with inputs/outputs before executing
+Rollback support: design tools to be reversible where possible
+
+What are the top security risks in agentic deployments?
+Prompt injection: malicious content in tool outputs hijacks the agent's instructions
+Privilege escalation: agent uses a tool to gain access it shouldn't have
+Data exfiltration: agent sends sensitive data to an external tool
+Runaway costs: agent loops cause massive LLM/API spend
+Unintended side effects: agent modifies production data during a "read" task
+Mitigations:
+Input/output sanitization at every tool boundary
+Principle of least privilege for all tool credentials
+Spend limits and circuit breakers
+Separate agent identity/credentials from human admin credentials
+
+How do you manage secrets and credentials that agents need to call tools?
+
+Never put credentials in the prompt or agent memory
+Use a secrets manager (AWS Secrets Manager, HashiCorp Vault)
+Issue short-lived tokens scoped to the specific run
+Use OAuth with minimal scopes for external service access
+Rotate credentials automatically; audit which runs used which credentials
+
+How do you test an agentic application before deploying to production?
+Testing agents is harder because execution paths are non-deterministic:
+
+Unit test each tool independently with mocked inputs
+Trace-based regression tests: record a golden run, replay and compare tool call sequence
+Eval harness: run the agent on a dataset of tasks, score outcomes (LLM-as-judge or rule-based)
+Chaos testing: inject tool failures, latency, and bad outputs — does the agent recover gracefully?
+Shadow mode: run the new agent in parallel with the old one on production traffic without affecting users
+
+
+## Production Deployment of Agentic AI Applications — Interview Q&A
+
+---
+
+### 🏗️ Architecture & Design
+
+**Q1. How does deploying an agentic app differ from deploying a traditional ML model or REST API?**
+
+Traditional APIs are **stateless and single-shot** — input in, output out. Agentic apps are fundamentally different:
+- They have **multi-step, dynamic execution** (the agent decides what to do next)
+- They maintain **state across tool calls and turns**
+- They involve **non-deterministic control flow** (you can't predict the exact execution path)
+- They have **variable latency** (one run might take 2s, another 2 minutes)
+- They interact with **external systems** (APIs, DBs, browsers) introducing side effects
+
+> Key design shift: from *request-response* to *long-running orchestration*.
+
+---
+
+**Q2. What are the core components of a production agentic system architecture?**
+
+```
+User / Client
+     │
+     ▼
+Orchestration Layer       ← manages agent loop, state, retries
+     │
+     ├── LLM API          ← Claude, GPT-4, Gemini etc.
+     │
+     ├── Tool Registry    ← functions the agent can call
+     │
+     ├── Memory Store     ← short-term (context) + long-term (vector DB)
+     │
+     ├── State Store      ← tracks run state, intermediate results
+     │
+     └── Observability    ← traces, logs, evals
+```
+
+---
+
+**Q3. How would you design for long-running agentic tasks that span minutes or hours?**
+
+- Use **async job queues** (Celery, BullMQ, AWS SQS) instead of synchronous HTTP
+- Store execution state in a **durable state machine** (Step Functions, Temporal, Prefect)
+- Return a **job ID** immediately; client polls or receives a webhook on completion
+- Implement **checkpointing** — save progress so a crashed run can resume, not restart
+- Use **timeouts at each step**, not just at the top level
+
+---
+
+### 🔁 Reliability & Failure Handling
+
+**Q4. What failure modes are unique to agentic systems and how do you handle them?**
+
+| Failure Mode | Mitigation |
+|---|---|
+| LLM hallucinating a tool call | Schema validation before execution |
+| Infinite loops (agent keeps retrying) | Step counter + max iteration limit |
+| Tool call fails midway | Retry with exponential backoff + fallback |
+| Context window exceeded | Sliding window / summarization of history |
+| Cascading side effects | Dry-run mode, sandboxed tool execution |
+| Non-deterministic outputs | Structured output enforcement (JSON mode) |
+
+---
+
+**Q5. How do you implement a "human-in-the-loop" checkpoint in production?**
+
+- Pause execution at **predefined decision gates** (e.g., before sending an email, making a purchase)
+- Serialize the agent state and store it (Redis / DB)
+- Notify the human via Slack/email with the pending action
+- Resume execution only after approval — rehydrate state from the store
+- Set an **approval timeout** — auto-reject or escalate if no response
+
+---
+
+**Q6. How do you prevent an agent from causing irreversible damage in production?**
+
+- **Tool-level guardrails**: classify tools as read-only vs. write vs. destructive
+- **Confirmation gates**: require explicit approval for destructive actions
+- **Sandbox environments**: test tool calls in staging before production
+- **Rate limits on tools**: cap how many emails/API calls an agent can make per run
+- **Audit trail**: log every tool call with inputs/outputs before executing
+- **Rollback support**: design tools to be reversible where possible
+
+---
+
+### 📊 Observability & Debugging
+
+**Q7. How do you trace and debug an agentic run in production?**
+
+Traditional logs aren't enough. You need **LLM-aware tracing**:
+
+- **Trace the full agent loop**: each LLM call, tool call, and decision as a span
+- Tools: **LangSmith, Langfuse, Arize Phoenix, OpenTelemetry**
+- Capture per-step: prompt sent, response received, tool chosen, tool output, tokens used, latency
+- Store traces linked to a **run ID** so you can replay any production failure
+- Alert on anomalies: unusually long runs, high tool call counts, repeated failures
+
+---
+
+**Q8. What metrics would you monitor for an agentic application?**
+
+**Operational:**
+- Task completion rate (success vs. failure vs. timeout)
+- Average steps per task
+- P95 latency per run
+- Tool call failure rate
+
+**LLM-specific:**
+- Token usage per run (cost control)
+- Context window utilization
+- Retry rate (sign of instability)
+
+**Quality:**
+- Goal achievement rate (via evals)
+- Human intervention rate (how often HITL kicks in)
+- Hallucination / invalid tool call rate
+
+---
+
+### 🔐 Security & Safety
+
+**Q9. What are the top security risks in agentic deployments?**
+
+- **Prompt injection**: malicious content in tool outputs hijacks the agent's instructions
+- **Privilege escalation**: agent uses a tool to gain access it shouldn't have
+- **Data exfiltration**: agent sends sensitive data to an external tool
+- **Runaway costs**: agent loops cause massive LLM/API spend
+- **Unintended side effects**: agent modifies production data during a "read" task
+
+**Mitigations:**
+- Input/output sanitization at every tool boundary
+- Principle of least privilege for all tool credentials
+- Spend limits and circuit breakers
+- Separate agent identity/credentials from human admin credentials
+
+---
+
+**Q10. How do you manage secrets and credentials that agents need to call tools?**
+
+- Never put credentials in the prompt or agent memory
+- Use a **secrets manager** (AWS Secrets Manager, HashiCorp Vault)
+- Issue **short-lived tokens** scoped to the specific run
+- Use **OAuth with minimal scopes** for external service access
+- Rotate credentials automatically; audit which runs used which credentials
+
+---
+
+### ⚙️ Scaling & Cost
+
+**Q11. How do you control LLM costs in a high-volume agentic system?**
+
+- **Cache repeated LLM calls** (prompt caching for static system prompts)
+- Use **smaller models for sub-tasks** (routing, classification) and large models only for reasoning
+- Set **max token budgets** per run; fail fast if exceeded
+- **Batch non-urgent tasks** to use batch API pricing
+- Monitor cost per task and alert on regressions
+
+---
+
+**Q12. How would you scale an agentic system to handle 10,000 concurrent runs?**
+
+- **Stateless orchestrator**: horizontal scaling of the orchestration service
+- **Queue-based decoupling**: agent runs are jobs consumed by a worker pool
+- **Isolated state per run**: Redis/DB keyed by run ID — no shared mutable state
+- **LLM rate limit management**: token bucket / queue to stay within provider limits
+- **Database connection pooling**: agents hitting DBs need pooled connections (PgBouncer etc.)
+- **Auto-scaling workers**: scale worker count based on queue depth
+
+---
+
+### 🧪 Testing & Evals
+
+**Q13. How do you test an agentic application before deploying to production?**
+
+Testing agents is harder because execution paths are non-deterministic:
+
+- **Unit test each tool** independently with mocked inputs
+- **Trace-based regression tests**: record a golden run, replay and compare tool call sequence
+- **Eval harness**: run the agent on a dataset of tasks, score outcomes (LLM-as-judge or rule-based)
+- **Chaos testing**: inject tool failures, latency, and bad outputs — does the agent recover gracefully?
+- **Shadow mode**: run the new agent in parallel with the old one on production traffic without affecting users
+
+---
+
+### Quick Cheat Sheet
+
+```
+Async execution     → Job queues + webhooks
+Long-running state  → Temporal / Step Functions / checkpointing
+Observability       → LangSmith / Langfuse / OpenTelemetry
+Safety              → HITL gates + tool guardrails + sandboxing
+Cost control        → Prompt caching + model routing + spend limits
+Scaling             → Stateless workers + queue-based concurrency
+Testing             → Evals + trace regression + chaos testing
+```
+
+
+
+
