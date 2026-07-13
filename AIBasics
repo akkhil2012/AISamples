@@ -33,9 +33,11 @@ Fine Tuning:
     - Full parameters fine tuning : when we need to do that?
     - LoRA: https://www.ibm.com/think/topics/lora
       - Compare the Low Rnak: Rank1 Vs Rank 2 : implications on the precision.
+    What the RANK should be???
 Ref: https://www.youtube.com/watch?v=t1caDsMzWBk&t=139s
 
-
+qLORA: is a quantized LORA
+// when to use qLORA when there is precision hit?
 
 
 1. Gradient Descent:
