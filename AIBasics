@@ -1,3 +1,14 @@
+Date 13July:
+------
+
+1. wordpiece vs sentencepiece vs bpe token?
+  BPE token:
+   Start with a character-level vocabulary, then iteratively merge the most frequent adjacent pair of symbols into a new token, repeating until you hit the target vocab size. Merges are purely frequency-driven.
+  Word Piece:
+WordPiece merges by likelihood gain, 
+  SentencePiece isn't an algorithm but a whitespace-aware framework 
+
+
 
 1. Gradient Descent:
 Gradient descent is an iterative optimisation algorithm used to minimise a loss function by updating model parameters in the opposite direction of the gradient. 
