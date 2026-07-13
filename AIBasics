@@ -87,6 +87,18 @@ Test the model with adversarial prompts.
     Jailbreak attempts
     Privacy leaks
 
+RAG Evaluation
+    Retrieval
+    Precision@k
+    Recall@k
+    MRR (Mean Reciprocal Rank)
+    NDCG (Normalized Discounted Cumulative Gain)
+    Generation
+    Faithfulness to retrieved documents
+    Answer relevance
+    Context utilization
+    Groundedness (whether claims are supported by retrieved context)
+
 1. Gradient Descent:
 Gradient descent is an iterative optimisation algorithm used to minimise a loss function by updating model parameters in the opposite direction of the gradient. 
 The gradient tells us the direction of steepest increase, so subtracting it moves us toward lower loss. 
