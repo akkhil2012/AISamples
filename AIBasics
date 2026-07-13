@@ -29,6 +29,13 @@ Instruction following itself: base models complete text; instruction-tuned model
 Capability compression: distill a large model's behavior on your task into a small one — often the economic argument: a fine-tuned 3.8B beating a prompted 70B on a narrow task is the whole edge-AI thesis
 Context-window economics: knowledge baked into weights doesn't consume prompt tokens; few-shot examples do, on every call
 
+Fine Tuning: 
+    - Full parameters fine tuning : when we need to do that?
+    - LoRA: https://www.ibm.com/think/topics/lora
+      - Compare the Low Rnak: Rank1 Vs Rank 2 : implications on the precision.
+Ref: https://www.youtube.com/watch?v=t1caDsMzWBk&t=139s
+
+
 
 
 1. Gradient Descent:
