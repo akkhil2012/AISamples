@@ -118,6 +118,9 @@ Assess whether the AI system achieves business goals.
     Defect reduction
     Time saved
 
+Deployment Stretegies:
+
+
 1. Gradient Descent:
 Gradient descent is an iterative optimisation algorithm used to minimise a loss function by updating model parameters in the opposite direction of the gradient. 
 The gradient tells us the direction of steepest increase, so subtracting it moves us toward lower loss. 
