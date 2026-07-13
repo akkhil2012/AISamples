@@ -334,6 +334,74 @@ State-space models (Mamba) — as transformer alternative
 199. Compliance-by-architecture
 200. Shadow AI (ungoverned usage in enterprise)
 
+
+
+======
+PRINCIPAL ENGINEER APPROACH:
+====
+Deployment strategies span three distinct questions interviewers often blur together: *where* the model runs (serving architecture), *how* you roll out changes safely (release strategy), and *how* you make it fit the target (optimization). Structure your answer along those axes.
+
+---
+
+## 1. Serving architectures — where the model runs
+
+**Cloud API / managed endpoints** — model behind a REST/gRPC endpoint (SageMaker, Vertex, Azure ML, or a vLLM/TGI/Triton cluster you run). Elastic scaling, centralized updates, easy A/B testing. Costs: per-token/per-call economics, latency floor from network round-trips, and data leaves your boundary — the compliance problem your whole EdgeMind thesis attacks.
+
+**Self-hosted inference servers** — vLLM (PagedAttention, continuous batching), TensorRT-LLM, Triton, TGI on your own GPUs. Control + data residency, but you own capacity planning, and utilization economics only work above a traffic threshold. Your vLLM optimization work at JPMC is exactly this tier.
+
+**Serverless / scale-to-zero** — good for spiky, low-volume workloads; cold-start latency is brutal for large models (loading 7B+ weights takes tens of seconds), so mostly viable for small models or with provisioned concurrency.
+
+**Edge / on-device** — model ships inside the app or device (ExecuTorch, ONNX Runtime Mobile, Core ML, TFLite/LiteRT). Zero network latency, offline operation, data never egresses (compliance-by-architecture). Costs: hardware fragmentation (your HTP/XNNPACK/Vulkan backend-fallback problem is *the* canonical pain), model-size ceilings forcing aggressive quantization, thermal/battery budgets, and updates now ride app-release cycles or require an OTA model-delivery mechanism with signing/verification.
+
+**Hybrid / tiered routing** — small model local, escalate hard queries to a bigger remote model, gated by confidence or classifiers. This is your SLM→RAG→LLM router; the interview framing is "spend compute proportional to query difficulty." Speculative decoding is the same philosophy inside a single server (draft model proposes, big model verifies).
+
+**Batch/offline inference** — no serving at all: nightly scoring jobs writing to a feature store or DB. Right answer whenever freshness requirements are hours, not milliseconds — cheapest by far, interviewers like hearing you ask "does this even need to be online?"
+
+---
+
+## 2. Release strategies — how you ship changes safely
+
+These come from classic software delivery but have ML-specific twists:
+
+**Shadow deployment** — new model receives real traffic *in parallel*, predictions logged but never served. Zero user risk; compare accuracy/latency distributions offline before promotion. The ML twist: you can't shadow-test *user reactions*, only model outputs.
+
+**Canary release** — route 1% → 5% → 25% → 100% of traffic to the new model, watching metrics at each step with automatic rollback triggers. The standard for LLM upgrades, where offline evals notoriously miss production regressions.
+
+**Blue-green** — two full environments; flip the router when green validates. Instant rollback, double the infrastructure cost during transition. Good when model load times make in-place swaps risky.
+
+**A/B testing** — statistically rigorous split by *user* (not request) with business metrics as the target, not just model metrics. The distinction from canary: canary asks "is it safe?", A/B asks "is it better?"
+
+**Champion–challenger** — standing pattern where the production model (champion) is continuously compared against candidates (challengers) on live or shadowed traffic — common in fraud/credit models where regulators want documented model-change justification.
+
+**Feature flags / kill switches** — per-model, per-tool, per-capability disable paths that don't need redeployment — the operational guardrail from our security discussion.
+
+Edge twist on all of these: staged rollout happens through app-store percentages or remote-config gates, rollback is slow (you can't yank binaries off devices), so **server-controlled model/config kill switches matter more on-device than in cloud** — ship the capability dark, enable remotely, disable remotely.
+
+---
+
+## 3. Optimization for deployment — making it fit
+
+- **Quantization**: PTQ (post-training, cheap — your 8da4w/16a4w recipes) vs QAT (quantization-aware training, better accuracy at low bits). INT8 is nearly free; INT4 needs care; activation quantization (the "a" in your recipes) is where accuracy usually breaks
+- **Pruning**: structured (drop heads/layers — hardware-friendly) vs unstructured (sparse weights — needs sparse kernels to pay off)
+- **Distillation**: train a small student on a big teacher's outputs — often the *real* deployment strategy: the deployed model is a distilled specialist, the frontier model stays offline as teacher
+- **Compilation/export**: graph capture and ahead-of-time compilation to the target (ExecuTorch `.pte`, ONNX, TensorRT engines) — where your static-shape export and vocab-mismatch bug class lives; the lesson to state: *the exported artifact, not the PyTorch checkpoint, is what you must eval and regression-test*
+- **KV-cache & attention optimizations**: PagedAttention, GQA/MQA, sliding-window — server-side throughput levers
+- **Speculative decoding, batching, caching**: continuous batching for throughput; semantic/prompt caching for repeated queries
+
+---
+
+## 4. The MLOps wrapper (what makes it production, not a demo)
+
+- **Model registry & versioning**: every deployed artifact is versioned, signed, and traceable to training data + code (your signed-`.pte` integrity point from the security discussion)
+- **CI/CD for models**: automated eval gates (accuracy, safety regression, latency budget) before any promotion — treat model quality as a regression-tested property
+- **Monitoring**: four layers — infra (GPU util, latency p99), model (confidence distributions, output length drift), data (input distribution drift vs. training), and business (task success, escalation rate). Drift detection triggers retraining pipelines
+- **Rollback discipline**: previous model version always hot-loadable; on-device, previous `.pte` retained locally so rollback is a config flip, not a download
+- **Audit trail**: which model version served which request — mandatory in regulated verticals, and the reason your HMAC journal logs model/version identifiers
+
+---
+
+**The interview synthesis:** pick the serving architecture from the constraints (latency, privacy, cost, connectivity), pick the release strategy from the blast radius (shadow → canary → A/B as risk decreases and maturity increases), optimize until the model fits the target's budget, and wrap everything in registry + eval gates + monitoring + rollback. And the differentiated point you can make from your own work: **on-device deployment inverts the usual assumptions** — rollout is slower, rollback is harder, observability is thinner (you can't tail logs on a fleet of phones without building telemetry that itself respects zero-egress), so governance has to be baked into the artifact (signing, attestation, local audit journals) rather than bolted onto the serving layer.
+
 Deployment Stretegies:
 
 
