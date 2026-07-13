@@ -15,6 +15,12 @@ System Prompt Design and Role Assignment
 
 Gaurdrails:
    - input  Gauradrails
+     - 1. Deterministic / rule-based filtering (first line, microseconds)
+     - 2. Classifier-based screening (small models, milliseconds)
+     3. LLM-as-judge screening (most capable, most expensive)
+     4. Structural / architectural defenses
+     5. Operational layer
+
    - output gaurdrails
    - Behavirol Gaurdrails
    - security Gaurdrails ( Compliance Gaurdrails , Privay gaurdrails)
@@ -35,9 +41,18 @@ Fine Tuning:
       - Compare the Low Rnak: Rank1 Vs Rank 2 : implications on the precision.
     What the RANK should be???
 Ref: https://www.youtube.com/watch?v=t1caDsMzWBk&t=139s
-
+     https://www.ibm.com/think/topics/lora
 qLORA: is a quantized LORA
 // when to use qLORA when there is precision hit?
+A realistic pipeline for a regulated-domain SLM is: continued pretraining on domain text → SFT with QLoRA on task demonstrations → DPO on preference data → quantize (your 8da4w/16a4w step) → deploy.
+
+Explain the frozen weights:
+"Frozen" means the original model's weights are excluded from training updates — they're treated as read-only constants rather than trainable variables.
+
+RoPE(Rotatory Positional Embedding)
+What is RoPE?
+
+RoPE (Rotary Positional Embedding) is a positional encoding technique used in many modern transformer models to represent the order of tokens. It was introduced in the paper "RoFormer: Enhanced Transformer with Rotary Position Embedding"
 
 
 1. Gradient Descent:
