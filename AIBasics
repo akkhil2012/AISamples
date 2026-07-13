@@ -18,8 +18,18 @@ Gaurdrails:
    - output gaurdrails
    - Behavirol Gaurdrails
    - security Gaurdrails ( Compliance Gaurdrails , Privay gaurdrails)
-  
-  
+
+Why do models need finetuning? What stretegies
+  A pretrained model is a generalist with a next-token objective — it knows a lot but isn't shaped for your task, domain, or behavior. Fine-tuning fixes specific gaps that prompting can't:
+
+Domain vocabulary and distribution shift: medical, legal, financial text has terminology and phrasing patterns underrepresented in pretraining (why MediPhi exists rather than raw Phi-3.5)
+Task specialization: classification, extraction, structured output formats where you need reliability, not best-effort
+Behavior/style alignment: tone, format compliance, refusal behavior, persona consistency
+Instruction following itself: base models complete text; instruction-tuned models answer questions — that gap is fine-tuning (SFT)
+Capability compression: distill a large model's behavior on your task into a small one — often the economic argument: a fine-tuned 3.8B beating a prompted 70B on a narrow task is the whole edge-AI thesis
+Context-window economics: knowledge baked into weights doesn't consume prompt tokens; few-shot examples do, on every call
+
+
 
 1. Gradient Descent:
 Gradient descent is an iterative optimisation algorithm used to minimise a loss function by updating model parameters in the opposite direction of the gradient. 
