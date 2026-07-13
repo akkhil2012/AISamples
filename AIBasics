@@ -118,6 +118,222 @@ Assess whether the AI system achieves business goals.
     Defect reduction
     Time saved
 
+=======================
+Top 200 terms:
+=======================
+1. Transformer & LLM Fundamentals (25)
+
+Transformer architecture
+Self-attention
+Multi-head attention
+Grouped-query attention (GQA)
+Multi-query attention (MQA)
+Positional encoding / RoPE
+Tokenization (BPE, SentencePiece)
+Vocabulary size
+Embedding layer
+Context window
+Autoregressive decoding
+Logits & softmax
+Temperature / top-k / top-p (nucleus) sampling
+Perplexity
+Encoder-only vs decoder-only vs encoder-decoder
+Mixture of Experts (MoE)
+Sparse vs dense models
+Scaling laws (Chinchilla)
+Emergent capabilities
+Hallucination
+Knowledge cutoff
+Sliding-window attention
+FlashAttention
+Attention sinks
+State-space models (Mamba) — as transformer alternative
+
+2. Training & Alignment (20)
+26. Pre-training
+27. Supervised fine-tuning (SFT)
+28. Instruction tuning
+29. RLHF
+30. RLAIF
+31. DPO (Direct Preference Optimization)
+32. Reward model
+33. Constitutional AI
+34. PEFT
+35. LoRA / QLoRA
+36. Adapters
+37. Catastrophic forgetting
+38. Curriculum learning
+39. Distillation (teacher–student)
+40. Synthetic data generation
+41. Data contamination
+42. Overfitting vs generalization
+43. Checkpointing
+44. Continued pre-training / domain adaptation
+45. Model merging
+3. Quantization & Edge Optimization (15) — your home turf
+46. Quantization (PTQ vs QAT)
+47. INT8 / INT4 / FP8
+48. Weight-only vs activation quantization (e.g., 8da4w, 16a4w)
+49. Group size / per-channel quantization
+50. GPTQ / AWQ / SmoothQuant
+51. Pruning (structured/unstructured)
+52. KV cache quantization
+53. ExecuTorch / ONNX Runtime / TensorRT-LLM
+54. Delegate backends (HTP, XNNPACK, Vulkan)
+55. Static vs dynamic shapes
+56. Operator fusion
+57. Memory bandwidth bound vs compute bound
+58. SLM (small language model)
+59. On-device inference / NPU offload
+60. Speculative decoding
+4. Inference & Serving (15)
+61. KV cache
+62. Prefill vs decode phase
+63. Continuous batching
+64. PagedAttention (vLLM)
+65. Tensor / pipeline / data parallelism
+66. TTFT (time to first token)
+67. Tokens per second / inter-token latency
+68. Throughput vs latency tradeoff
+69. Prompt caching
+70. Model routing / cascading
+71. Serverless vs dedicated inference
+72. Cold start
+73. Batching strategies
+74. GPU utilization / MFU
+75. Disaggregated prefill-decode serving
+5. Prompting & Context Engineering (15)
+76. Zero-shot / few-shot / in-context learning
+77. Chain-of-thought (CoT)
+78. Tree-of-thought
+79. ReAct pattern
+80. Self-consistency
+81. System prompt vs user prompt
+82. Prompt injection
+83. Jailbreaking
+84. Prompt template / prompt versioning
+85. Context engineering
+86. Structured outputs (JSON mode)
+87. Function/tool schemas
+88. Grounding
+89. Instruction hierarchy
+90. Meta-prompting
+6. Embeddings & Retrieval (RAG) (25)
+91. Embeddings / dense vectors
+92. Cosine similarity / dot product
+93. Vector database (FAISS, Milvus, pgvector, Pinecone)
+94. ANN search (HNSW, IVF)
+95. Chunking strategies
+96. Overlap / chunk size tuning
+97. Semantic vs keyword (BM25) search
+98. Hybrid search
+99. Reranking (cross-encoder)
+100. RAG pipeline
+101. Retrieval precision/recall
+102. Query rewriting / expansion
+103. HyDE (hypothetical document embeddings)
+104. Multi-hop retrieval
+105. GraphRAG
+106. Agentic RAG
+107. Contextual retrieval
+108. Parent-child chunking
+109. Metadata filtering
+110. Embedding model dimensionality
+111. Matryoshka embeddings
+112. Late interaction (ColBERT)
+113. Freshness / index refresh
+114. RAG vs fine-tuning decision framework
+115. Lost-in-the-middle problem
+7. AI Agents (25)
+116. Agent (autonomy spectrum)
+117. Agentic loop (perceive–plan–act–observe)
+118. Tool use / function calling
+119. Planning & decomposition
+120. Reflection / self-critique
+121. Memory (short-term, long-term, episodic)
+122. Scratchpad / working memory
+123. Orchestrator–worker pattern
+124. Router agent
+125. Human-in-the-loop (HITL)
+126. Autonomy levels / guardrailed autonomy
+127. Task queue / event-driven agents
+128. Stateful vs stateless agents
+129. Agent runtime / sandbox
+130. Computer use / browser agents
+131. Code execution agents
+132. Deep research agents
+133. Ambient agents
+134. Agent handoff
+135. Termination conditions / max iterations
+136. Cost & token budgeting
+137. Trajectory / episode
+138. Skill libraries
+139. Workflow vs agent distinction (Anthropic's framing)
+140. Environment / observation space
+8. Multi-Agent & Protocols (15)
+141. MCP (Model Context Protocol)
+142. MCP server / client / host
+143. Tools, resources, prompts (MCP primitives)
+144. A2A (agent-to-agent protocol)
+145. Agent registry / discovery
+146. Supervisor / hierarchical multi-agent
+147. Debate / consensus patterns
+148. Blackboard architecture
+149. Message passing / shared state
+150. Swarm patterns
+151. Capability negotiation
+152. Sampling (MCP server-initiated inference)
+153. Elicitation
+154. Transport (stdio, streamable HTTP, SSE)
+155. Tool poisoning / rug-pull attacks
+9. Evaluation & Observability (20)
+156. Evals (offline vs online)
+157. Golden datasets
+158. LLM-as-judge
+159. Pairwise comparison / Elo
+160. Benchmarks (MMLU, HumanEval, SWE-bench, GAIA)
+161. Faithfulness / groundedness
+162. Answer relevance
+163. RAGAS metrics
+164. Regression testing for prompts
+165. A/B testing / canary release
+166. Tracing / spans (OpenTelemetry for LLMs)
+167. Token usage & cost telemetry
+168. Drift detection
+169. Feedback loops (thumbs up/down → training signal)
+170. Confidence calibration / confidence gating
+171. Agent trajectory evaluation
+172. Red teaming
+173. Error taxonomy
+174. Observability platforms (Langfuse, Arize, W&B)
+175. Shadow deployment
+10. Safety, Security & Governance (25) — where you'll differentiate at ED/Principal level
+176. Guardrails (input/output filtering)
+177. Content moderation classifiers
+178. PII detection & redaction
+179. Prompt injection defense (direct vs indirect)
+180. Data exfiltration risk
+181. Least-privilege tool access
+182. Capability tokens / scoped credentials
+183. Audit logging / tamper-evident journals
+184. Zero data egress architecture
+185. Model provenance / model cards
+186. AI Bill of Materials (AIBOM)
+187. EU AI Act / DPDP / GDPR implications
+188. NIST AI RMF
+189. Responsible AI / fairness / bias
+190. Differential privacy
+191. Federated learning
+192. TEE / secure enclave inference
+193. Watermarking & output attribution
+194. Rate limiting / abuse prevention
+195. Sandboxing untrusted tool calls
+196. Supply-chain risk (model & dependency)
+197. Kill switch / circuit breakers
+198. Policy-as-code for AI systems
+199. Compliance-by-architecture
+200. Shadow AI (ungoverned usage in enterprise)
+
 Deployment Stretegies:
 
 
