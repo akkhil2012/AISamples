@@ -77,6 +77,15 @@ Automatic Metrics:
     METEOR
     BERTScore
 
+Safety Evaluation
+
+Test the model with adversarial prompts.
+    Hate speech
+    Violence
+    Self-harm
+    Prompt injection
+    Jailbreak attempts
+    Privacy leaks
 
 1. Gradient Descent:
 Gradient descent is an iterative optimisation algorithm used to minimise a loss function by updating model parameters in the opposite direction of the gradient. 
