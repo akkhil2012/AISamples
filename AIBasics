@@ -8,7 +8,18 @@ Date 13July:
 WordPiece merges by likelihood gain, 
   SentencePiece isn't an algorithm but a whitespace-aware framework 
 
+When to use which?
+Chain-of-Thought and Step-Back Prompting
 
+System Prompt Design and Role Assignment
+
+Gaurdrails:
+   - input  Gauradrails
+   - output gaurdrails
+   - Behavirol Gaurdrails
+   - security Gaurdrails ( Compliance Gaurdrails , Privay gaurdrails)
+  
+  
 
 1. Gradient Descent:
 Gradient descent is an iterative optimisation algorithm used to minimise a loss function by updating model parameters in the opposite direction of the gradient. 
