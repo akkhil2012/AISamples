@@ -54,6 +54,29 @@ What is RoPE?
 
 RoPE (Rotary Positional Embedding) is a positional encoding technique used in many modern transformer models to represent the order of tokens. It was introduced in the paper "RoFormer: Enhanced Transformer with Rotary Position Embedding"
 
+Evaluation of AI Models:
+What are the ways for AI model evaluation?
+  Human Evaluation
+    Correctness
+    Helpfulness
+    Clarity
+    Completeness
+    Tone
+    Safety
+
+Automatic Metrics:
+    Classification
+    Accuracy
+    Precision
+    Recall
+    F1 Score
+    ROC-AUC
+    Text Generation
+    BLEU
+    ROUGE
+    METEOR
+    BERTScore
+
 
 1. Gradient Descent:
 Gradient descent is an iterative optimisation algorithm used to minimise a loss function by updating model parameters in the opposite direction of the gradient. 
