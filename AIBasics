@@ -254,6 +254,18 @@ Axolotl
     Instead of writing Python code,
     everything is defined in YAML.
 
+| Tool            | Primary Role                                    | Best For                                                       |
+| --------------- | ----------------------------------------------- | -------------------------------------------------------------- |
+| HuggingFace TRL | Training algorithms (SFT, DPO, GRPO, ORPO, PPO) | Research and alignment                                         |
+| Unsloth         | Speed and memory optimization                   | Single-GPU or consumer-GPU fine-tuning                         |
+| Axolotl         | Configuration-driven training                   | Reproducible experiments and engineering teams                 |
+| LLaMA-Factory   | No-code training interface                      | Beginners and rapid experimentation                            |
+| Together AI     | Managed cloud fine-tuning                       | Fast cloud-based development without infrastructure management |
+| AWS SageMaker   | Enterprise ML platform                          | Large-scale production training and deployment                 |
+
+
+
+
 29. RLHF
 30. RLAIF
 31. DPO (Direct Preference Optimization)
