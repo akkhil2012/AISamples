@@ -263,8 +263,41 @@ Axolotl
 | Together AI     | Managed cloud fine-tuning                       | Fast cloud-based development without infrastructure management |
 | AWS SageMaker   | Enterprise ML platform                          | Large-scale production training and deployment                 |
 
+  -----------------
+  TAXONOMY OF SYNTHETIC DATA
+-------------------
+Synthetic Data
+│
+├── Instruction Data : Used for supervised fine-tuning (SFT)
+├── Preference Data : Used for DPO, ORPO, and related preference optimization methods.
+├── Reasoning Data : 
+├── Tool Use Data: Used to teach tool calling.
+    User
 
+      ↓
+      
+      Call Weather API
+      
+      ↓
 
+    Return Weather
+├── RAG Data: Used to train retrieval-augmented generation
+    {"id":"doc001","title":"Hypertension Treatment","text":"Adults with blood pressure above 140/90 mmHg should begin lifestyle modifications. ACE inhibitors are recommended as first-line treatment unless contraindicated."}
+├── Dialogue Data
+├── Code Data
+├── Multimodal Data
+└── Evaluation Data
+
+Issue with MoE:
+    One expert receives nearly all tokens.
+    Other experts remain idle.
+    This causes:
+    Poor utilization
+    Bottlenecks
+    Experts that never learn
+
+Tools: distilabel, DataDreamer, Argilla
+  To create synthetic data: Argilla
 
 29. RLHF
 30. RLAIF
