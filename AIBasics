@@ -153,6 +153,71 @@ State-space models (Mamba) — as transformer alternative
 26. Pre-training
 27. Supervised fine-tuning (SFT)
 28. Instruction tuning
+   https://www.geeksforgeeks.org/artificial-intelligence/instruction-tuning-for-large-language-models/
+
+Modern LLMs Finetuning Development Lifecycle
+                    Massive Internet Data
+                          │
+                          ▼
+                 PRE-TRAINING PHASE
+         (Learn Language & General Knowledge)
+                          │
+                    Base Foundation Model
+                          │
+                          ▼
+                POST-TRAINING PHASE
+     (Teach Helpful, Safe, Domain-Specific Behavior)
+                          │
+          Instruction-Tuned / Chat / Domain Model
+
+| Feature                | CLM   | MLM  | Prefix-LM     |
+| ---------------------- | ----- | ---- | ------------- |
+| Predict Next Token     | ✅     | ❌    | ✅             |
+| Predict Missing Tokens | ❌     | ✅    | ❌             |
+| Text Generation        | ⭐⭐⭐⭐⭐ | ⭐    | ⭐⭐⭐⭐          |
+| Question Answering     | ⭐⭐⭐⭐  | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐         |
+| Chat Models            | ✅     | Rare | ✅             |
+| Used by GPT/Llama/Phi  | ✅     | ❌    | Some variants |
+
+TO DO:??
+CLM (Causal Language Modeling), MLM (Masked Language Modeling), and Prefix-LM are three different training objectives used to train Transformer models.
+
+Pre-Training Deep Dive
+   - Data Curation and Filtering at Scale
+Why filtering is important:
+Raw internet data contains:
+    Spam
+    Advertisements
+    Duplicate pages
+    Low-quality content
+    Toxic content
+    Machine-generated text
+    Corrupted documents
+    Broken HTML
+    Malware scripts
+
+Common Filtering Techniques
+  - Deduplication
+  -Quality Filtering
+      Remove pages with:
+      Too many ads
+      Random characters
+      Very little text
+      Poor grammar
+      Keyword stuffing
+   -Language Detection
+      Keep only supported languages.
+   -Toxic Content Filtering
+        Remove or reduce:
+        Hate speech
+        Explicit content
+        Violent content
+        Illegal content
+        Malware instructions
+   Continued Pre-Training (CPT) for Domain Adaptation
+What is CPT?
+    Continued Pre-Training (also called Domain-Adaptive Pretraining in some literature) starts with a pretrained base model 
+      and continues training on domain-specific unlabeled text using the original language modeling objective.
 29. RLHF
 30. RLAIF
 31. DPO (Direct Preference Optimization)
