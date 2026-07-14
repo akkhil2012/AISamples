@@ -218,6 +218,42 @@ Common Filtering Techniques
 What is CPT?
     Continued Pre-Training (also called Domain-Adaptive Pretraining in some literature) starts with a pretrained base model 
       and continues training on domain-specific unlabeled text using the original language modeling objective.
+
+Transformer Reinforcement Learning(TRL)
+      TRL
+    │
+    ├── SFT
+    ├── DPO
+         DPO (Direct Preference Optimization)
+         Instead of learning from correct answers,
+         the model learns from human preferences.
+        Benefits
+            Better reasoning
+            Better math
+            Better coding
+    ├── PPO
+   
+    ├── GRPO
+         GRPO (Group Relative Preference Optimization)
+
+Used heavily in reasoning models.
+    ├── ORPO
+    └── Reward Modeling
+
+Unsloth is an optimization framework for training LLMs much faster on consumer GPUs.
+Features
+    Fast LoRA
+    Fast QLoRA
+    Gradient checkpointing optimizations
+    Memory optimization
+    Flash Attention support
+    Works with TRL
+
+Axolotl
+    Axolotl is a highly configurable fine-tuning framework.
+    Instead of writing Python code,
+    everything is defined in YAML.
+
 29. RLHF
 30. RLAIF
 31. DPO (Direct Preference Optimization)
