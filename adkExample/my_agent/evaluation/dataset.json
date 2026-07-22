@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "question": "What is Retrieval Augmented Generation?",
+    "reference_answer": "Retrieval-Augmented Generation combines information retrieval with an LLM to improve factual accuracy."
+  },
+  {
+    "id": 2,
+    "question": "Explain vector databases.",
+    "reference_answer": "Vector databases store embeddings for efficient similarity search."
+  }
+]

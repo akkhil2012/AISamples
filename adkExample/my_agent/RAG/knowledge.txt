@@ -1,0 +1,7 @@
+Amazon S3 is an object storage service.
+
+AWS Glue is a serverless ETL service.
+
+Amazon Athena allows SQL queries on S3 data.
+
+AWS Lambda executes code without provisioning servers.
