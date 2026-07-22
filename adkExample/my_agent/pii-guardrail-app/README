@@ -1,4 +1,0 @@
-pip install google-adk
-export GOOGLE_API_KEY=your_ai_studio_key
-# from the pii-guardrail-app directory:
-adk web
