@@ -1,0 +1,145 @@
+--- Banking Fraud Triage: Semantic Routing via OpenRouter ---
+Embedding model: openai/text-embedding-3-small
+Agent model:     openrouter/openai/gpt-4o-mini
+
+[Router] 8 exemplars embedded for route 'FraudReport' via openai/text-embedding-3-small
+[Router] 6 exemplars embedded for route 'DisputeAgent' via openai/text-embedding-3-small
+[Router] 6 exemplars embedded for route 'SecurityAgent' via openai/text-embedding-3-small
+[Router] 6 exemplars embedded for route 'InfoAgent' via openai/text-embedding-3-small
+
+=== Incoming customer message: 'I just got an alert for a 50,000 rupee purchase I never made!' ===
+[Router] scores={'FraudReport': 0.5621, 'DisputeAgent': 0.4192, 'SecurityAgent': 0.4676, 'InfoAgent': 0.2437} decision=FraudReport override=None
+/Users/akhil/.pyenv/versions/3.11.9/lib/python3.11/site-packages/google/adk/tools/function_tool.py:96: UserWarning: [EXPERIMENTAL] feature FeatureName.JSON_SCHEMA_FOR_FUNC_DECL is enabled.
+  build_function_declaration(
+-------- FRAUD REPORT Handler Called (time-critical path) --------
+-------- FRAUD REPORT Handler Called (time-critical path) --------
+-------- FRAUD REPORT Handler Called (time-critical path) --------
+Final Response: I've taken immediate action on your report of the unauthorized 50,000 rupee purchase. Here’s what has been done:
+
+1. Your card has been blocked to prevent any further unauthorized transactions.
+2. A fraud case has been opened regarding the unauthorized purchase, and our fraud operations team has been notified.
+3. You will receive a callback to discuss this matter further.
+
+Please rest assured that your account is being taken care of, and we are prioritizing your safety. If you have any more questions or need further assistance, feel free to ask!
+
+=== Incoming customer message: 'Amazon charged me twice for the same order last week.' ===
+[Router] scores={'FraudReport': 0.3923, 'DisputeAgent': 0.7169, 'SecurityAgent': 0.2596, 'InfoAgent': 0.2187} decision=DisputeAgent override=None
+-------- Dispute Handler Called --------
+Final Response: A dispute (DP-95AE6C09) has been filed regarding the double charge for your Amazon order. A provisional credit has been assessed, and the merchant has been contacted. You can expect a resolution within 7-10 business days. If you have any further questions or need assistance, feel free to ask!
+
+=== Incoming customer message: 'I got an SMS with a link asking me to verify my account details.' ===
+[Router] scores={'FraudReport': 0.4087, 'DisputeAgent': 0.2956, 'SecurityAgent': 0.7353, 'InfoAgent': 0.4102} decision=SecurityAgent override=None
+-------- Security Handler Called --------
+Final Response: I have reported the suspicious SMS and taken security actions, including revoking sessions and issuing a password reset link. The phishing sample has also been forwarded to the security team. 
+
+Please do not click on the link in that message, and if you have already done so, consider changing your password immediately. If you need further assistance, let me know!
+
+=== Incoming customer message: 'What is the limit for UPI transactions per day?' ===
+[Router] scores={'FraudReport': 0.2582, 'DisputeAgent': 0.1906, 'SecurityAgent': 0.2336, 'InfoAgent': 0.5222} decision=InfoAgent override=None
+-------- Info Handler Called --------
+Final Response: The limit for UPI transactions per day can vary by bank, but generally, it is around ₹1 lakh to ₹2 lakh per day. It's best to check with your specific bank for their UPI transaction limits.
+
+=== Incoming customer message: 'There's a charge on my card from a store, but I don't remember buying anything there.' ===
+[Router] scores={'FraudReport': 0.6014, 'DisputeAgent': 0.5747, 'SecurityAgent': 0.341, 'InfoAgent': 0.2805} decision=FraudReport override=None
+-------- FRAUD REPORT Handler Called (time-critical path) --------
+Final Response: I've opened a fraud case regarding the unauthorized transaction from the store on your card. Your card has been blocked, transactions frozen, and our fraud operations team has been notified. A callback has also been scheduled to discuss this further. 
+
+You're in good hands, and we'll work to resolve this as quickly as possible. If you have any other concerns, feel free to let me know!
+
+=== Incoming customer message: 'xyzzy plugh foobar' ===
+[Router] scores={'FraudReport': 0.1464, 'DisputeAgent': 0.1262, 'SecurityAgent': 0.201, 'InfoAgent': 0.0997} decision=FALLBACK_HUMAN_QUEUE override=below_threshold(0.201<0.45)
+-------- Unclear Handler Called (below threshold) --------
+
+=== ROUTING AUDIT LOG ===
+[
+  {
+    "ts": "2026-07-19T07:01:31.210934Z",
+    "query": "I just got an alert for a 50,000 rupee purchase I never made!",
+    "embedding_model": "openai/text-embedding-3-small",
+    "scores": {
+      "FraudReport": 0.5621,
+      "DisputeAgent": 0.4192,
+      "SecurityAgent": 0.4676,
+      "InfoAgent": 0.2437
+    },
+    "threshold": 0.45,
+    "raw_winner": "FraudReport",
+    "final_decision": "FraudReport",
+    "override_reason": null
+  },
+  {
+    "ts": "2026-07-19T07:01:36.934216Z",
+    "query": "Amazon charged me twice for the same order last week.",
+    "embedding_model": "openai/text-embedding-3-small",
+    "scores": {
+      "FraudReport": 0.3923,
+      "DisputeAgent": 0.7169,
+      "SecurityAgent": 0.2596,
+      "InfoAgent": 0.2187
+    },
+    "threshold": 0.45,
+    "raw_winner": "DisputeAgent",
+    "final_decision": "DisputeAgent",
+    "override_reason": null
+  },
+  {
+    "ts": "2026-07-19T07:01:39.973378Z",
+    "query": "I got an SMS with a link asking me to verify my account details.",
+    "embedding_model": "openai/text-embedding-3-small",
+    "scores": {
+      "FraudReport": 0.4087,
+      "DisputeAgent": 0.2956,
+      "SecurityAgent": 0.7353,
+      "InfoAgent": 0.4102
+    },
+    "threshold": 0.45,
+    "raw_winner": "SecurityAgent",
+    "final_decision": "SecurityAgent",
+    "override_reason": null
+  },
+  {
+    "ts": "2026-07-19T07:01:42.947070Z",
+    "query": "What is the limit for UPI transactions per day?",
+    "embedding_model": "openai/text-embedding-3-small",
+    "scores": {
+      "FraudReport": 0.2582,
+      "DisputeAgent": 0.1906,
+      "SecurityAgent": 0.2336,
+      "InfoAgent": 0.5222
+    },
+    "threshold": 0.45,
+    "raw_winner": "InfoAgent",
+    "final_decision": "InfoAgent",
+    "override_reason": null
+  },
+  {
+    "ts": "2026-07-19T07:01:45.566820Z",
+    "query": "There's a charge on my card from a store, but I don't remember buying anything there.",
+    "embedding_model": "openai/text-embedding-3-small",
+    "scores": {
+      "FraudReport": 0.6014,
+      "DisputeAgent": 0.5747,
+      "SecurityAgent": 0.341,
+      "InfoAgent": 0.2805
+    },
+    "threshold": 0.45,
+    "raw_winner": "FraudReport",
+    "final_decision": "FraudReport",
+    "override_reason": null
+  },
+  {
+    "ts": "2026-07-19T07:01:48.504014Z",
+    "query": "xyzzy plugh foobar",
+    "embedding_model": "openai/text-embedding-3-small",
+    "scores": {
+      "FraudReport": 0.1464,
+      "DisputeAgent": 0.1262,
+      "SecurityAgent": 0.201,
+      "InfoAgent": 0.0997
+    },
+    "threshold": 0.45,
+    "raw_winner": "SecurityAgent",
+    "final_decision": "FALLBACK_HUMAN_QUEUE",
+    "override_reason": "below_threshold(0.201<0.45)"
+  }
+]

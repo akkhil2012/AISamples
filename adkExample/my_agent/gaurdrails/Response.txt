@@ -1,0 +1,25 @@
+I’m summarizing the script’s behavior from the updated file so I can describe it clearly.
+
+Read [](file:///Users/akhil/Desktop/my_agent/gaurdrails/GaurdRailsPII.py#1-1), lines 1 to 260
+
+This script is a privacy-safety demo for an AI agent workflow.
+
+Functionally, it does four main things:
+
+- It detects sensitive personal data in text.
+  - It looks for things like email addresses, phone numbers, Aadhaar numbers, PAN numbers, credit card numbers, API keys, and IP addresses.
+  - It uses regex patterns and a few validation checks, such as Luhn validation for card numbers.
+
+- It applies guardrails to agent output.
+  - In strict mode, it blocks any output that contains PII and forces the agent to retry.
+  - In redaction mode, it masks the detected PII and allows the sanitized output through.
+
+- It runs a small CrewAI multi-agent workflow.
+  - One agent summarizes a support ticket for engineering.
+  - Another agent writes a privacy note for a compliance reviewer.
+  - Both agents are connected through tasks and guardrails.
+
+- It uses an OpenRouter-backed LLM.
+  - The script configures CrewAI to call an OpenRouter model so the agents can generate responses through that provider.
+
+In short, the script is designed to prevent personal data from leaking out of AI-generated outputs and to demonstrate how guardrails can enforce that behavior.
