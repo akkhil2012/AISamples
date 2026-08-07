@@ -9,4 +9,15 @@ Enterprise data shouldn't be locked behind SQL expertise. Discover how AI can tr
 This chapter explores the architecture, guardrails, and enterprise patterns behind production-ready Text-to-SQL systems
 
 
-2.
+2. Context engineering:
+repo:
+---
+https://github.com/akkhil2012/AISamples/tree/main/Chapter1_ContextEngineering
+
+TagLine:
+---
+Most organizations believe better AI comes from bigger models. 
+In reality, the biggest differentiator is context. In this chapter, you'll learn the principles of Context Engineering and how enterprise leaders design AI systems that deliver accurate, grounded, and business-aware decisions.
+
+
+
