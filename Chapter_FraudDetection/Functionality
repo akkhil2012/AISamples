@@ -1,0 +1,47 @@
+What this project does
+It builds and evaluates a fraud-detection pipeline using transaction data, then predicts fraud probability for new records.
+
+Main files
+app.py
+
+Main fraud pipeline
+Loads CSV data
+Performs preprocessing and feature engineering
+Optionally balances the training set with SMOTE-style methods
+Trains an XGBoost fraud classifier
+Optionally tunes hyperparameters with Optuna
+Optionally calibrates predicted probabilities
+Evaluates performance using metrics like PR-AUC, ROC-AUC, precision, and recall
+Produces a trained model and can run predictions
+fraud_client.py
+
+Client wrapper around app.py functionality
+Loads train.csv, trains the model, then loads test.csv
+Runs line-by-line probability prediction for each test record
+Saves output to predictions.csv
+train_data.py
+
+Synthetic data generation helper
+Creates a fake transaction dataset with customer, merchant, location, amount, device, and fraud label fields
+Writes train.csv (and can be adapted for additional data)
+Core feature engineering in app.py
+The pipeline creates many fraud-relevant derived features, including:
+
+Date/time features from trans_date and trans_time
+Cyclical encodings for hour/month/day of week
+Merchant risk features based on merch_id
+Customer transaction behavior and velocity features from amt
+Geographic distance features using lat, long, merch_lat, merch_long
+Amount transformations and high/low/round amount flags
+Age features from dob
+Label encoding for categorical columns like gender, category, state, customer_device, customer_payment_method
+What the project is for
+Demonstrates a full fraud-detection workflow:
+data loading
+feature engineering
+class balancing
+model training
+evaluation
+prediction export
+Uses XGBoost as the model backend
+Provides a command-line client to generate per-record fraud probabilities
