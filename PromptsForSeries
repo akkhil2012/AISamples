@@ -55,3 +55,49 @@ The Future of Sales Isn't More Leads—It's Smarter Leads Powered by AI
 Learn how AI-powered lead generation combines automation, enrichment, and intelligent workflows to deliver high-quality opportunities and accelerate enterprise growth."
 
 
+6. Incident Tracker 
+https://github.com/akkhil2012/AISamples/tree/main/Chapter5_IncidentTracker
+
+Title:
+----
+"The Fastest Way to Resolve an Incident Is to Let AI Find the Answer First."
+
+YT:
+"When critical systems fail, every second impacts customers, revenue, and reputation. Learn how AI-powered incident management automates detection, accelerates root cause analysis, and orchestrates faster resolution—enabling resilient, 
+always-on enterprise operations."
+
+7. ReRank Algorithmn:
+https://github.com/akkhil2012/AISamples/tree/main/Chapter6_Re-RankingAlgo
+
+Title:
+----
+Enterprise AI Is Only as Accurate as the Information It Retrieves.
+
+YT:
+"Why do enterprise AI systems return irrelevant answers despite having access to the right data? The challenge often isn't retrieval—it's ranking.
+Learn how modern re-ranking algorithms identify the most relevant context, improving AI accuracy, reducing hallucinations, and enabling production-ready RAG platforms."
+
+8. Observalbility Tool:
+----
+https://github.com/akkhil2012/AISamples/tree/main/Chapter9_ObservabilityDashBoard
+
+Title:
+Enterprise AI Without Observability Is Just a Black Box
+
+YT:
+--
+"Every enterprise monitors its applications—but what about its AI? Discover how AI observability provides real-time visibility into prompts, responses, latency, costs, and model behavior, helping organizations build reliable, governed, and production-ready AI platforms."
+
+
+9. Data Certification:(*)
+-------------
+https://github.com/akkhil2012/AISamples/tree/main/Chapter_AgentsForDataCertification
+
+Titl:
+Trusted AI Begins with Certified Data.
+
+yt:
+"AI models are only as reliable as the data they consume. Learn how autonomous AI agents continuously validate data quality, 
+detect drift, enforce governance policies, and generate audit-ready certification reports—helping enterprises build AI they can trust."
+
+
