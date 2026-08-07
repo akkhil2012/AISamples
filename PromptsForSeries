@@ -118,4 +118,14 @@ The Future of Enterprise AI Isn't Bigger Models—It's Smarter Models
 "Why spend millions on AI infrastructure when smarter optimization can deliver similar business outcomes? Discover how quantization compresses large language models, 
 enabling faster inference, lower costs, and AI deployments that scale from cloud data centers to edge devices."
 
+12. https://github.com/akkhil2012/AISamples/tree/main/deterministicAI/FraudUsingStreamlit
+Fraud using streamlit:
+--------
+Enterprise AI Must Be Predictable Before It Can Be Trusted.
+
+"Should the same customer receive different answers every time they ask the same question? In regulated industries, inconsistency isn't innovation—it's risk. Learn how Deterministic AI combines governance, business rules, 
+and controlled reasoning to build AI systems that are predictable, auditable, and trusted."
+"Predictability Is the Foundation of Trusted Enterprise AI."
+
+
 
