@@ -110,4 +110,12 @@ Enterprise AI Creates Value When It Can Take Action, Not Just Generate Answers
 "Generating text is only half the story. Enterprise AI delivers real value when it can retrieve information, invoke business services, and execute workflows securely. Learn how Function Calling connects AI with enterprise systems to automate operations, improve productivity,
 and accelerate business outcomes."
 
+11. Quantization:
+https://github.com/akkhil2012/AISamples/tree/main/Chapter_Quantization
+
+The Future of Enterprise AI Isn't Bigger Models—It's Smarter Models
+
+"Why spend millions on AI infrastructure when smarter optimization can deliver similar business outcomes? Discover how quantization compresses large language models, 
+enabling faster inference, lower costs, and AI deployments that scale from cloud data centers to edge devices."
+
 
