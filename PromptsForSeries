@@ -5,9 +5,16 @@ https://github.com/akkhil2012/AISamples/tree/main/Chapter10_ttSQl
 
 Tagline:
 ---------
-Enterprise data shouldn't be locked behind SQL expertise. Discover how AI can translate plain English into secure database queries, enabling business teams to access insights instantly. 
+Enterprise data shouldn't be locked behind SQL expertise. Discover how AI can translate plain English into secure database queries,
+enabling business teams to access insights instantly. 
 This chapter explores the architecture, guardrails, and enterprise patterns behind production-ready Text-to-SQL systems
 
+>>>>>
+Enterprise data shouldn't be locked behind SQL expertise. If your business teams can't ask questions in plain English, you're moving too slow.
+Modern Text-to-SQL systems bridge this gap, translating natural language into secure, optimized database queries instantly.
+It’s not just about LLMs. A production-ready architecture requires schema mapping, prompt engineering, and semantic layers to ensure accuracy.
+But speed requires safety. Enterprise patterns demand strict guardrails to prevent hallucination and ensure data privacy at every step.
+By mastering these patterns, you turn your database into a conversational engine. Let's dive into the architecture of Text-to-SQL.
 
 2. Context engineering:
 repo:
