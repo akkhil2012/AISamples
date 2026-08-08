@@ -29,3 +29,17 @@ Website Builder Expert
 Rowan Cheung — posts daily updates on AI developments, practical ChatGPT prompts, tutorials, and roundups of AI product launches. 
 Cherry Lane
 Allie K. Miller — frequently named alongside Fokkema as a top AI business-strategy voice on LinkedIn.
+
+
+>>>>>
+
+I host a YouTube channel focused on AI platform engineering and edge/on-device inference, and I'd love to have you on for a one-on-one conversation.
+
+The topic I'd like to explore: NVIDIA's Blackwell architecture with NVFP4 pushes raw GPU throughput to the best we've seen yet — but I have a hypothesis that P99 latency spikes will actually increase relative to prior architectures under multi-tenant load, and that this creates a real data-governance and SLO problem that hasn't been talked about enough. I'm presenting this hypothesis as a talk at PyTorch Europe Conference 2026, and I think a live discussion with someone at your level of depth would sharpen the argument and give your audience something genuinely new to chew on.
+
+A bit about me: I'm a VP of Technology / AI Platform Leader at JPMorgan Chase, and I've spoken previously at MCP Dev Summit Mumbai on offline-first, zero-egress on-device agents. Happy to work around your schedule — even 30 minutes would be great.
+
+Would you be open to it?
+
+Best,
+Akhil
