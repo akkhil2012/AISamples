@@ -129,6 +129,9 @@ enabling faster inference, lower costs, and AI deployments that scale from cloud
 Fraud using streamlit:
 --------
 Enterprise AI Must Be Predictable Before It Can Be Trusted.
+McKinsey & Company (and its analytics arm, QuantumBlack) frequently recommends and implements gradient-boosted tree algorithms like XGBoost
+Using Machine Learning for Fraud Detection in Banking
+
 
 "Should the same customer receive different answers every time they ask the same question? In regulated industries, inconsistency isn't innovation—it's risk. Learn how Deterministic AI combines governance, business rules, 
 and controlled reasoning to build AI systems that are predictable, auditable, and trusted."
