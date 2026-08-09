@@ -1,0 +1,6 @@
+EDGE inferenc
+
+PyTorch ExecuTorch — you're already deploying Phi-3 Mini on it; a "6 months in production" retrospective (tokenizer bugs, JNI crashes, quantization tradeoffs) is content nobody else can write.
+Qualcomm AI Hub + AI Runtime SDK — direct extension of your Snapdragon 8 Gen 3 HTP work; review model conversion/optimization workflow.
+MLC-LLM — natural head-to-head against ExecuTorch on your own device/benchmarks (tokens/sec, memory, cold-start latency).
+Hailo AI Software Suite — paired with Qualcomm Snapdragon as one of the two most prominent edge AI platforms showcased at CVPR 2026, so reviewing it positions you against the other half of the edge landscape you don't usually cover
