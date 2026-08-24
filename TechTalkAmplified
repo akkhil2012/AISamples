@@ -1,0 +1,129 @@
+# Techie Talks with Kuldeep x Akhil Gupta
+## Speaking Notes (Plain English) — The Latency Paradox: Why Faster GPUs Break SLOs
+
+*Use these as your talking points. Each one is written in simple language — read it, make it your own, add your own examples when you speak.*
+
+---
+
+## ACT 1: The GPU Utilization Trap (00:00 – 06:30)
+
+**Q1: What is the "Blackwell Paradox"? Why does chasing throughput kill p99 latency?**
+
+Simple explanation:
+Companies want their GPUs busy almost all the time — that saves money. So teams use tricks like bigger batch sizes (processing many requests together) and speculative decoding (guessing ahead to go faster). These tricks make the *average* response fast. But here's the catch: if one important request gets stuck in a big batch, it has to wait for the whole batch to finish. So while most requests are fast, a few critical ones become very slow — sometimes dangerously slow. That "worst case" number is called p99 latency, and it's the one that actually causes outages, not the average.
+
+Simple line you can say out loud:
+*"Making the average faster can make the worst case much worse — and in production, the worst case is the one that breaks things."*
+
+---
+
+**Q2: If you cap GPU usage at 85% to protect latency, how do you justify the idle 15% to a CFO?**
+
+Simple explanation:
+Leaving some GPU capacity unused looks like wasted money on a spreadsheet. But the real comparison isn't "idle capacity vs. money saved" — it's "idle capacity vs. cost of an outage." If you push GPUs too hard and a critical transaction times out, you can face SLA penalty payments, failed transactions, and a chain reaction of failures across other systems. Once you put a real dollar number on what an outage costs, the small idle percentage looks cheap by comparison.
+
+Simple line you can say out loud:
+*"Idle capacity has a visible cost. An outage has a bigger, hidden one — you just don't see it until it happens."*
+
+---
+
+## ACT 2: Fraud Scoring — XGBoost vs LLMs (06:30 – 14:00)
+
+**Q3: Where does GenAI actually belong in fraud detection vs. just being "for show"?**
+
+Simple explanation:
+Split the work into two lanes:
+- **Fast lane (real-time):** When a payment needs approval in under 50 milliseconds, you need something extremely fast and simple — a model like XGBoost, which is built for quick yes/no type decisions. This is not the place for GenAI — it's too slow for this job.
+- **Slow lane (after the transaction):** GenAI is useful *after* the transaction happens — looking at patterns of behavior over time, creating realistic fake data to train models better, or helping a human investigator understand a suspicious case. Here, taking half a second or more is completely fine.
+
+Simple line you can say out loud:
+*"Use the fast, simple tool for the split-second decision, and save GenAI for the slower thinking that happens afterward."*
+
+---
+
+**Q4: What happens if a real-time fraud check gets stuck behind a big GenAI request in the same system?**
+
+Simple explanation:
+If you don't separate these two types of work, a heavy GenAI request (like a long AI-generated report) can hog the system's resources. The urgent fraud check then gets delayed. When it's delayed too long, the system usually falls back to an older, simpler rule-based system. That backup system is less accurate — so you get more wrongly-flagged transactions, some real transactions get blocked, and it becomes harder to explain exactly why a decision was made (which is a problem for compliance teams).
+
+Simple line you can say out loud:
+*"When urgent and heavy workloads share the same system, urgent work loses — and the backup plan is worse than the real thing."*
+
+---
+
+## ACT 3: Governance in the Trenches — KV Cache & SRE (14:00 – 21:30)
+
+**Q5: How do you stop one bad request from breaking the system for everyone else (multi-tenant systems)?**
+
+Simple explanation, three protections:
+1. **Stop bad requests at the door** — before letting a request use system resources, check if the system is already under pressure, and reject it early if needed.
+2. **Give each user/team their own fixed share** — don't let everyone pull from one shared pool of memory. Give each a limit so one heavy user can't starve everyone else.
+3. **Pause less important work when needed** — if something urgent comes in, the system should be able to pause background tasks and give the urgent request priority.
+
+Simple line you can say out loud:
+*"Protect the system the same way you'd protect a shared kitchen — set limits, don't let one dish take over every burner."*
+
+---
+
+**Q6: What warning signs do teams usually ignore until something breaks?**
+
+Simple explanation:
+Most teams only watch two things: average speed and how busy the GPU is. Both of those can look totally fine while real problems are quietly building. Three better things to watch:
+- **Time until the first response starts appearing** — if this becomes unpredictable, requests are waiting in line even if the "average" still looks okay.
+- **How long requests sit waiting before they even start.**
+- **Memory fragmentation** — the system may report "plenty of free memory" overall, but if it's scattered in small unusable pieces, a new request still can't get what it needs.
+
+Simple line you can say out loud:
+*"Averages hide problems. The real warning signs show up in the details nobody's watching."*
+
+---
+
+## ACT 4: The Edge AI Pivot — ExecuTorch & NPUs (21:30 – 27:30)
+
+**Q7: What actually works running AI directly on a device today, and what's still just hype?**
+
+Simple explanation:
+**What works:** Small AI models — shrunk down using a technique called quantization — running on special chips built for AI (like the ones in Qualcomm Snapdragon phones). These are good for lightweight tasks: filtering data locally, classifying text, or scoring something privately without sending data anywhere.
+
+**What doesn't work yet:** Big, complex AI reasoning with lots of back-and-forth steps, or handling huge amounts of context/information — that's still too heavy for a phone or small device. If someone claims their phone is running a full complex AI reasoning system with no help from the cloud, be skeptical.
+
+Simple line you can say out loud:
+*"Small, focused AI tasks work great on-device today. Big, complex reasoning still needs the cloud."*
+
+---
+
+**Q8: How do you decide whether a request should go to the device or the cloud?**
+
+Simple explanation:
+Simple rule of thumb:
+- If the answer needs to come back in under 10 milliseconds, or the data is too private to leave the device — keep it on the device.
+- If the request needs a lot of background information, or needs to pull data from many different sources — send it to the cloud.
+
+Simple line you can say out loud:
+*"Fast and private stays on the device. Big and complex goes to the cloud."*
+
+---
+
+## ACT 5: The Future of Inference & Wrap-Up (27:30 – 30:00)
+
+**Q9: What's the biggest shift platform engineers need to prepare for?**
+
+Simple explanation:
+Most companies still scale their AI systems the old way — based on simple signals like CPU usage, the same way they'd scale a regular website. But AI systems have different pressure points — like how much is being processed at once and how urgent each request is. The next generation of systems needs to actually understand these AI-specific signals, not just basic server load.
+
+Simple line you can say out loud:
+*"We need to stop scaling AI systems like websites — they don't break the same way, so they can't be managed the same way."*
+
+---
+
+**Closing — where people can follow you:**
+
+Simple version:
+Mention LinkedIn for regular posts on edge AI, agent-based systems, and AI governance. Mention your GitHub for project work. Mention your upcoming talk at PyTorch Conference Europe, where you'll go deeper into these same themes — latency, governance, and running AI on edge devices.
+
+---
+
+### How to use this document
+- Each section gives you the simple version of the idea — read it, then explain it in your own words with your own examples from JPMC/fraud/edge AI work.
+- The "simple line" under each point is a short, quotable takeaway — good for repeating on camera or reusing later as a LinkedIn caption.
+- If you want, expand any section into 2–3 full sentences of your own before recording, so it sounds natural rather than read.
