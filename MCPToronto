@@ -1,0 +1,17 @@
+Hypothesis
+
+When an MCP host operates on-device and offline — in regulated verticals where no Authorization Server is reachable — the Four A's of identity governance (Administration, Authentication, Authorization, Audit) can be satisfied locally and verifiably, without weakening the security guarantees of the standard OAuth 2.1/PKCE/DCR model, by rooting host identity in hardware (Keystore/SPIFFE-style), minting short-lived capability tokens in-process, gating tool calls through an in-process control plane with JIT scopes, and anchoring accountability in a tamper-evident local audit chain — with federation to a centralized IdP deferred to reconnection via OAuth Token Exchange, rather than treated as a precondition for operation.
+
+Restated as testable sub-claims (useful if this is a talk you want to back with data):
+
+Identity without an IdP: A device-rooted, SPIFFE-style host identity (Keystore-backed) can serve as a verifiable authentication anchor for the host itself — not just its clients — with no live Authorization Server on the network path.
+Authorization without a token service: ES256 capability tokens minted in-process, with sub-5-minute lifetimes, can approximate the security posture of Authorization-Server-issued scoped tokens (bounded blast radius, short validity, cryptographically verifiable) for gating individual tool calls.
+Audit without a central log: An HMAC-signed, hash-chained, append-only local journal can provide the same tamper-evidence and non-repudiation guarantees expected of centralized audit infrastructure, verifiable independently of connectivity.
+Convergence is deferrable, not skippable: Offline-minted identity, tokens, and audit records can be reconciled with an upstream IdP via OAuth Token Exchange after the fact, without requiring re-authorization of actions already taken — i.e., the trust boundary can be established locally and federated upward rather than required downward from a central authority.
+Performance is compatible with real-time agentic use: This full loop (self-authentication → capability minting → tool-call gating → audit emission) can execute in under 400ms on commodity edge hardware (Snapdragon-class), making it viable for interactive, latency-sensitive on-device agent workflows — not just batch/offline reconciliation.
+
+One-line version for a slide:
+
+The Four A's don't require a live Authorization Server — they require a verifiable root of trust. On-device hosts can carry that root themselves, and reconcile with the cloud later instead of depending on it now.
+
+Want me to also draft the counter-hypot
