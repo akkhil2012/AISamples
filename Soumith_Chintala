@@ -1,0 +1,49 @@
+Here's a working question list, mapped to each cluster in the room — sharp enough to get real answers, not small talk.
+
+**RNA foundry founder (Phase I vaccine, GMP manufacturing)**
+- Where does AI actually sit in your pipeline today — sequence design, manufacturing QC, or trial data ops — versus where it's still just a pitch-deck slide?
+- What's your regulatory posture on AI-assisted decisions in a GMP environment — is that closer to what a bank's model-risk function does, or totally different?
+
+**150-person humanoid robotics team**
+- What's your actual inference stack on the robot — onboard compute or offloaded, and what's your latency budget before "dexterous" breaks down?
+- Where does agentic planning fail on a real factory floor that never shows up in a lab demo?
+
+**DeepMind researcher (Aya, Pythia)**
+- What's the biggest gap you see between what open-weight, multilingual models can do and what enterprises actually deploy?
+- Any lessons from Pythia-style training transparency work that you think production teams ignore at their peril?
+
+**220B MoE pretraining engineer (127,000 accelerators)**
+- What actually breaks first at that scale — interconnect, checkpointing, or data pipeline — and how much of your job is systems engineering versus ML?
+- This is your closest peer to Trainium/kernels people below — worth asking how routing/expert-load balancing held up in practice.
+
+**NumPy maintainer (SIMD kernels)**
+- Where do you see the real ceiling on CPU-side inference before you're forced onto accelerators — is that ceiling moving?
+
+**AWS Trainium / Hugging Face kernels / MLPerf engineers** *(high-value for you — closest to your ExecuTorch/quantization work)*
+- How does kernel-level optimization on Trainium compare to what you'd do for edge/NPU targets like Snapdragon HTP — same primitives, different constraints?
+- What's the honest gap between MLPerf numbers and what you see in production inference?
+
+**Indian voice-model leaderboard team**
+- What tradeoffs did you make for Indian languages/accents that global voice models skip — and does that push you toward on-device deployment too?
+
+**Police-station AI builders / hospital AI research centre founders** *(your top priority — direct governance overlap)*
+- What did your audit/compliance process actually look like before deployment — did you build to a standard, or did you have to invent one?
+- What's the failure mode you're most afraid of in a policing or clinical context, and how do you monitor for it post-deployment?
+- Would ISO 42001-style governance have helped you, or is it the wrong shape for what you're doing?
+
+**IIIT-Hyderabad professors (robotics, CV)**
+- What's a research problem your students are working on that industry hasn't caught up to yet?
+
+**Swiggy co-founder / scaled founders**
+- What broke first as you scaled AI from pilot to production — the model, the team, or the org's willingness to trust it?
+
+**Salesforce AI Research / AWS researchers**
+- Where does enterprise-vendor AI research diverge from what an in-house platform team like yours actually needs?
+
+**The 16-year-old doing mechanistic interpretability**
+- Genuinely worth asking what got them into interpretability specifically — and whether they see interpretability as a governance tool or a pure research interest. Could be a great, unexpected quote for content.
+
+**For Soumith directly**
+- Given ExecuTorch is now core to on-device deployment — what's the roadmap for edge inference at Thinking Machines' scale, and where do you see PyTorch's on-device story going next?
+
+If it'd help, I can also draft 2-3 short, memorable intro lines for you to use when someone asks "so what do you work on" — that first 20 seconds tends to set whether these conversations go deep or stay surface-level.
