@@ -14,4 +14,33 @@ One-line version for a slide:
 
 The Four A's don't require a live Authorization Server — they require a verifiable root of trust. On-device hosts can carry that root themselves, and reconcile with the cloud later instead of depending on it now.
 
-Want me to also draft the counter-hypot
+Counter Hypothesis:
+Counter-Hypothesis
+
+Local, hardware-rooted identity and audit are not equivalent to centrally-issued and centrally-verified trust — they only appear equivalent until the device is compromised, cloned, or its clock is untrustworthy, at which point the entire edge-native Four A's model degrades silently, with no external Authorization Server to detect or revoke the failure in real time.
+
+Threat model, mapped to each component:
+
+1. Authentication — Keystore-rooted host identity
+
+Attack: Keystore compromise or hardware key extraction (rooted device, TEE side-channel, malicious firmware) lets an attacker impersonate the host identity indefinitely.
+Failure mode: Unlike a centralized IdP, there's no revocation list the rest of the system can consult while offline — a compromised host keeps minting valid-looking tokens until reconnection.
+Mitigation to present: attestation (SafetyNet/Play Integrity or hardware attestation) checked at token-exchange time; short reconciliation windows; anomaly detection on the audit chain itself post-sync.
+
+2. Authorization — in-process ES256 capability tokens
+
+Attack: Clock-skew or clock-manipulation attacks against sub-5-minute token lifetimes — if an attacker can roll the device clock back, "expired" tokens become valid again.
+Failure mode: In-process minting means the thing granting the capability and the thing checking it are the same trust boundary — a compromised control plane can mint itself arbitrary scopes with no external check.
+Mitigation to present: monotonic clock sources (not wall-clock) for expiry; scope-minting bound to attested app state, not just process identity.
+
+3. Audit — HMAC-signed, hash-chained local journal
+
+Attack: Fork attack — an attacker with device access can fork the audit chain at any point (roll back to an earlier hash, branch, replay events differently), since there's no external anchor to detect divergence until sync.
+Failure mode: Hash-chaining proves internal consistency, not non-repudiation against the device owner — a chain can be internally valid and still be a fabricated alternate history.
+Mitigation to present: periodic external checkpointing when connectivity exists (even brief); Merkle-root anchoring; treat local audit as provisional until federated.
+
+4. Administration — offline policy/scope decisions
+
+Attack: Policy drift — scopes and permissions minted offline may diverge from what a central admin would have approved, especially in regulated verticals where policy changes mid-flight (e.g., a drug recall, a fraud pattern update).
+Failure mode: The system optimizes for availability over consistency — by design, offline hosts can't know about revocations or policy updates issued after their last sync.
+Mitigation to present: bounded token lifetimes act as a natural staleness ceiling; define an explicit "max acceptable staleness" per vertical (pharma GMP vs. logistics have very different tolerances).
